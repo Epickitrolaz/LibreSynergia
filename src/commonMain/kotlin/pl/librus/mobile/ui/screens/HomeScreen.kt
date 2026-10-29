@@ -38,6 +38,7 @@ fun HomeScreen(
     strings: Strings = Strings(AppLanguage.ENGLISH),
     onSwitchChild: (String) -> Unit,
     onNavigateToGrades: () -> Unit,
+    onNavigateToSimulator: () -> Unit = onNavigateToGrades,
     onNavigateToTimetable: () -> Unit,
     onNavigateToAttendance: () -> Unit,
     onNavigateToNotices: () -> Unit,
@@ -83,7 +84,7 @@ fun HomeScreen(
             Card(
                 modifier = Modifier
                     .weight(1f)
-                    .clickable(onClick = onNavigateToGrades),
+                    .clickable(onClick = onNavigateToSimulator),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {

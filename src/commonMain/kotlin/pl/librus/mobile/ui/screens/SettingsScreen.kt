@@ -1,5 +1,6 @@
 package pl.librus.mobile.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,13 +13,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.auth.AuthBackendType
 import pl.librus.mobile.auth.UserSession
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.icons.AppIcon
+import pl.librus.mobile.ui.icons.AppIconVectorDrawables
 import pl.librus.mobile.ui.theme.AppThemeMode
 
 @Composable
@@ -26,9 +33,11 @@ fun SettingsScreen(
     session: UserSession?,
     themeMode: AppThemeMode,
     language: AppLanguage,
+    currentAppIcon: AppIcon = AppIcon.DEFAULT,
     strings: Strings,
     onThemeChange: (AppThemeMode) -> Unit,
     onLanguageChange: (AppLanguage) -> Unit,
+    onAppIconChange: (AppIcon) -> Unit = {},
     onLogout: () -> Unit
 ) {
     Column(
@@ -197,6 +206,64 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // App Launcher Icon Switcher Card
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Palette,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = strings.appIconSection,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                        Text(
+                            text = strings.appIconDesc,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    IconOptionTile(
+                        title = strings.appIconDefault,
+                        selected = currentAppIcon == AppIcon.DEFAULT,
+                        onClick = { onAppIconChange(AppIcon.DEFAULT) },
+                        vector = AppIconVectorDrawables.DefaultMonogram,
+                        backgroundColor = Color.Black,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    IconOptionTile(
+                        title = strings.appIconVariant,
+                        selected = currentAppIcon == AppIcon.VARIANT,
+                        onClick = { onAppIconChange(AppIcon.VARIANT) },
+                        vector = AppIconVectorDrawables.VariantBook,
+                        backgroundColor = Color(0xFF141414),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // App Information Card
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -274,6 +341,89 @@ private fun ChoiceButton(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun IconOptionTile(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    vector: ImageVector,
+    backgroundColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+    }
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
+        color = containerColor,
+        modifier = modifier
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(backgroundColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = vector,
+                    contentDescription = title,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(60.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            if (selected) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(999.dp))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Active",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.height(18.dp))
+            }
         }
     }
 }
