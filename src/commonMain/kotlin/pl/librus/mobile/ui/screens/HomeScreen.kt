@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.*
 import pl.librus.mobile.domain.calculations.GradeCalculator
 import pl.librus.mobile.domain.models.*
 import pl.librus.mobile.ui.AppLanguage
@@ -44,8 +45,9 @@ fun HomeScreen(
     onGradeClick: (Grade) -> Unit
 ) {
     val overallGpa = remember(grades) { GradeCalculator.calculateOverallGpa(grades) }
-    val todaySchedule = remember(timetable) {
-        timetable.find { it.dayOfWeekName.contains("Dzisiaj") || it.dayOfWeekName.contains("Today") } ?: timetable.firstOrNull()
+    val today = Clock.System.todayIn(TimeZone.of("Europe/Warsaw"))
+    val todaySchedule = remember(timetable, today) {
+        timetable.find { it.date == today.toString() }
     }
     val unreadNotices = remember(notices) { notices.filter { !it.isRead } }
 

@@ -1,5 +1,6 @@
 package pl.librus.mobile.data
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,7 @@ class LibrusRepository(
 
     private val _timetable = MutableStateFlow<List<TimetableDay>>(emptyList())
     val timetable: StateFlow<List<TimetableDay>> = _timetable.asStateFlow()
+    private var timetableOwner: String? = null
 
     private val _attendances = MutableStateFlow<List<Attendance>>(emptyList())
     val attendances: StateFlow<List<Attendance>> = _attendances.asStateFlow()
@@ -69,7 +71,8 @@ class LibrusRepository(
         val subjects = if (cached.subjects.isNotEmpty()) cached.subjects else MockDataProvider.subjects
         _grades.value = GradeCalculator.groupGradesBySubject(subjects, cached.rawGrades)
 
-        _timetable.value = cached.timetable
+        timetableOwner = cached.timetableOwner
+        _timetable.value = if (timetableOwner != null) cached.timetable else emptyList()
         _attendances.value = cached.attendances
         _attendanceStats.value = cached.attendanceStats
         _notices.value = cached.notices
@@ -78,7 +81,12 @@ class LibrusRepository(
     suspend fun loadDataForSession(session: UserSession) {
         _isLoading.value = true
         try {
-            if (session.backendType == AuthBackendType.DEMO_MOCK || liveApiClient == null) {
+            val owner = "${session.backendType}:${session.identifier}:${session.activeChild.id}"
+            if (timetableOwner != owner) {
+                _timetable.value = emptyList()
+                timetableOwner = owner
+            }
+            if (session.backendType == AuthBackendType.DEMO_MOCK) {
                 loadMockData(session)
             } else {
                 loadLiveData(session)
@@ -90,6 +98,7 @@ class LibrusRepository(
 
     private suspend fun loadLiveData(session: UserSession) {
         try {
+            liveApiClient?.fetchTimetable(session)?.let { _timetable.value = it }
             val me = liveApiClient?.fetchMe(session)
             val profile = me ?: session.profile
             _studentProfile.value = profile
@@ -112,7 +121,6 @@ class LibrusRepository(
             val groups = GradeCalculator.groupGradesBySubject(subjects, rawGrades)
             _grades.value = groups
 
-            _timetable.value = MockDataProvider.timetableWeek
             _attendances.value = MockDataProvider.attendances
             _attendanceStats.value = AttendanceCalculator.calculateStats(MockDataProvider.attendances)
             _notices.value = MockDataProvider.notices
@@ -127,13 +135,16 @@ class LibrusRepository(
                 categories = categories,
                 rawGrades = rawGrades,
                 timetable = _timetable.value,
+                timetableOwner = timetableOwner,
                 attendances = _attendances.value,
                 attendanceStats = _attendanceStats.value,
                 notices = _notices.value
             )
             storage.putString(AuthManager.KEY_CACHED_STATE, json.encodeToString(cacheState))
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
-            loadMockData(session)
+            // Preserve cached live data on network/parsing failures; never switch to demo.
         }
     }
 
@@ -168,6 +179,7 @@ class LibrusRepository(
             categories = MockDataProvider.categories,
             rawGrades = rawGrades,
             timetable = _timetable.value,
+            timetableOwner = timetableOwner,
             attendances = _attendances.value,
             attendanceStats = _attendanceStats.value,
             notices = _notices.value

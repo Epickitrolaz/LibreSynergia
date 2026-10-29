@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.*
 import pl.librus.mobile.domain.models.TimetableDay
 import pl.librus.mobile.domain.models.TimetableSlot
 import pl.librus.mobile.ui.AppLanguage
@@ -29,10 +30,11 @@ fun TimetableScreen(
     timetable: List<TimetableDay>,
     strings: Strings = Strings(AppLanguage.ENGLISH)
 ) {
-    var selectedDayIndex by remember {
+    val today = Clock.System.todayIn(TimeZone.of("Europe/Warsaw"))
+    var selectedDayIndex by remember(timetable.map { it.date }, today) {
         mutableStateOf(
             timetable.indexOfFirst {
-                it.dayOfWeekName.contains("Dzisiaj") || it.dayOfWeekName.contains("Today")
+                it.date == today.toString()
             }.takeIf { it >= 0 } ?: 0
         )
     }
