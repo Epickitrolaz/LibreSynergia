@@ -1,6 +1,6 @@
-# OpenCode Agent Instructions — Librus Mobile Client
+# Antigravity & OpenCode Agent Instructions — Librus Mobile Client
 
-Guidance for OpenCode and other AI coding agents working in this repository.
+Guidance for Antigravity, OpenCode, and other AI coding agents working in this repository.
 
 ---
 
@@ -12,24 +12,43 @@ The user will provide their own Android SDK, Xcode, and local build tools. Your 
 
 ---
 
-## 2. Repository Layout
+## 2. Git & Branching Policy
 
-- `docs/`: **Primary specifications and intelligence.**
-  - `docs/LIBRUS_API_GUIDE.md`: Deep dive into authentication (Portal Bearer vs Gateway 2.0 session), token refresh, and network rules.
-  - `docs/ENDPOINTS_REFERENCE.md`: Complete endpoints and JSON schemas.
-  - `docs/QUIRKS_AND_EDGE_CASES.md`: Critical pitfalls (inconsistent IDs, object references, base64 CDATA, timetable slots, kindergarten accounts).
-  - `docs/SZKOLNY_ANALYSIS.md`: Exhaustive architectural breakdown of the legacy `szkolny.eu` app.
-  - `docs/ARCHITECTURE_AND_ROADMAP.md`: Proposed cross-platform architecture and roadmap.
-- `references/`: **Read-only reverse-engineering references (ignored by git).**
-  - `references/szkolny-android`: Full legacy source of Szkolny.eu (use for grade calculations, domain rules, UI ideas).
-  - `references/librus-synergia`: Python async client with verified reverse-engineered notes and parsers.
-  - `references/librus-sdk`: TypeScript SDK with OpenAPI specifications (`references/openapi/`).
-  - `references/librus-rs`: Rust client for Synergia & Wiadomości.
-- `src/`: Application source code.
+1. **Branch Selection**:
+   - **Unless the user specifically states to use the `main` branch, always create and work on a custom feature branch (e.g. `feature/<name>`) and fallback to `dev` if unselected.**
+   - *(Exception: When the user explicitly requests to use `main` for a session, commit directly to `main`).*
+2. **Verification on Every Modification**:
+   - **After EACH modification, the build MUST be tested for all available platforms** (e.g. `./gradlew testDebugUnitTest`, `./gradlew compileIosMainKotlinMetadata`, `./gradlew assembleDebug`).
+3. **Commit Every Change**:
+   - **Every change must be committed to git immediately after verification.** Keep git commits frequent, focused, and accompanied by clear commit messages.
+4. **Do Not Commit Reference & Cache Files**:
+   - Do NOT commit files in `references/`, build artifacts (`build/`, `.gradle/`), local sdk paths (`local.properties`), or secrets.
 
 ---
 
-## 3. Strict Rules & Guardrails
+## 3. Original Reference Files & Intelligence Sources
+
+The following files and folders have been present in this repository from the start as reference material. **Use them as reference if needed, but DO NOT modify or commit them**:
+
+- `references/szkolny-android/`:
+  - **Source**: Legacy Szkolny.eu Android application (GPL-3.0 by Kacper Ziubryniewicz & contributors, `https://github.com/szkolny-eu/szkolny-android`).
+  - **Use for**: Reverse engineering domain logic, weighted average grade calculations, timetable substitutions/cancellations, absence classification, and UI ideas.
+- `references/librus-synergia/`:
+  - **Source**: Reverse-engineered Python client (MIT, by Karol Dylewski / `emsi/librus_pyapi`, `https://github.com/karoldylewski/librus-synergia`).
+  - **Use for**: Modern Gateway 2.0 auth handshake, redirect handling, and endpoint documentation.
+- `references/librus-sdk/`:
+  - **Source**: Modern TypeScript SDK and CLI (`@librus-sdk/core`).
+  - **Use for**: Verified flows for `portal.librus.pl` (Portal Rodzina) and Gateway 2.0 (`X-Baner` anti-bot header calculation, `SynergiaAccounts`, `Auth/TokenInfo`).
+- `references/librus-rs/`:
+  - **Source**: Community Rust client for Synergia & Wiadomości (`https://github.com/0x00000FF/librus-rs`).
+- `references/openapi/`:
+  - **Source**: Synthesized OpenAPI 3.0 JSON specifications for Librus API 3.0, Gateway 2.0, and Wiadomości.
+- `docs/`:
+  - Pre-synthesized architectural documentation (`LIBRUS_API_GUIDE.md`, `ENDPOINTS_REFERENCE.md`, `QUIRKS_AND_EDGE_CASES.md`, `SZKOLNY_ANALYSIS.md`, `ARCHITECTURE_AND_ROADMAP.md`).
+
+---
+
+## 4. Strict Rules & Guardrails
 
 1. **NEVER use the dead OAuth password grant**:
    `POST https://api.librus.pl/OAuth/Token` with `grant_type=password` was killed by Librus in 2026 and returns `unsupported_grant_type`. Do not attempt to use it.
@@ -48,15 +67,14 @@ The user will provide their own Android SDK, Xcode, and local build tools. Your 
 
 ---
 
-## 4. Development Workflow with OpenCode
+## 5. Development Workflow
 
-Run OpenCode directly in this project directory:
+Run commands directly in this project directory:
 ```bash
-# Launch interactive TUI
-opencode
+# Verify unit tests and multiplatform compilation
+./gradlew testDebugUnitTest
+./gradlew compileIosMainKotlinMetadata
 
-# Or run non-interactively with a specific task
-opencode run "Implement the PortalAuthClient in commonMain"
+# Build debug APK
+./gradlew assembleDebug
 ```
-
-When building features, always refer to `docs/ENDPOINTS_REFERENCE.md` and check `references/` for how legacy or verified community libraries handled the domain logic.
