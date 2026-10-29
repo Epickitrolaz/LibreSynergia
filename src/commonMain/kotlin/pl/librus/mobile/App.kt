@@ -92,6 +92,8 @@ fun App(
     val grades by repository.grades.collectAsState()
     val recentGrades by repository.allGradesRaw.collectAsState()
     val timetable by repository.timetable.collectAsState()
+    val timetableSyncFailed by repository.timetableSyncFailed.collectAsState()
+    val isDataLoading by repository.isLoading.collectAsState()
     val attendances by repository.attendances.collectAsState()
     val attendanceStats by repository.attendanceStats.collectAsState()
     val notices by repository.notices.collectAsState()
@@ -252,7 +254,16 @@ fun App(
                                 ScreenKey.TIMETABLE -> {
                                     TimetableScreen(
                                         timetable = timetable,
-                                        strings = strings
+                                        strings = strings,
+                                        isLoading = isDataLoading,
+                                        syncFailed = timetableSyncFailed,
+                                        onRetry = {
+                                            coroutineScope.launch {
+                                                (authManager.state.value as? AuthState.Authenticated)?.let {
+                                                    repository.loadDataForSession(it.session)
+                                                }
+                                            }
+                                        }
                                     )
                                 }
                                 ScreenKey.ATTENDANCE -> {

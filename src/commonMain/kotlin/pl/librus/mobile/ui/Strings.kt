@@ -96,6 +96,10 @@ class Strings(val lang: AppLanguage) {
     val replaces = if (isPl) "Zamiast: " else "Replaces: "
     val noChangesMessage = if (isPl) "Brak zastępstw i odwołanych lekcji w tym dniu." else "No substitutions or cancelled lessons on this day."
     val noLessonsDay = if (isPl) "Brak lekcji w tym dniu." else "No lessons on this day."
+    val timetableUnavailable = if (isPl) "Nie udało się pobrać planu. Zachowano dostępne dane offline." else "Could not load the timetable. Available offline data has been kept."
+    val timetableNotLoaded = if (isPl) "Plan lekcji nie został jeszcze pobrany." else "The timetable has not been loaded yet."
+    val timetableLoading = if (isPl) "Pobieranie planu lekcji…" else "Loading timetable…"
+    val retryTimetable = if (isPl) "Spróbuj ponownie" else "Try again"
 
     // Attendance Screen
     val attendanceTitle = if (isPl) "Frekwencja ogólna" else "Overall Attendance"

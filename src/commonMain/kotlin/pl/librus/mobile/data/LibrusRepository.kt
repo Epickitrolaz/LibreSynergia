@@ -35,6 +35,8 @@ class LibrusRepository(
     private val _timetable = MutableStateFlow<List<TimetableDay>>(emptyList())
     val timetable: StateFlow<List<TimetableDay>> = _timetable.asStateFlow()
     private var timetableOwner: String? = null
+    private val _timetableSyncFailed = MutableStateFlow(false)
+    val timetableSyncFailed: StateFlow<Boolean> = _timetableSyncFailed.asStateFlow()
 
     private val _attendances = MutableStateFlow<List<Attendance>>(emptyList())
     val attendances: StateFlow<List<Attendance>> = _attendances.asStateFlow()
@@ -80,6 +82,7 @@ class LibrusRepository(
 
     suspend fun loadDataForSession(session: UserSession) {
         _isLoading.value = true
+        _timetableSyncFailed.value = false
         try {
             val owner = "${session.backendType}:${session.identifier}:${session.activeChild.id}"
             if (timetableOwner != owner) {
@@ -98,7 +101,9 @@ class LibrusRepository(
 
     private suspend fun loadLiveData(session: UserSession) {
         try {
-            liveApiClient?.fetchTimetable(session)?.let { _timetable.value = it }
+            val week = liveApiClient?.fetchTimetable(session)
+            _timetableSyncFailed.value = week == null
+            week?.let { _timetable.value = it }
             val me = liveApiClient?.fetchMe(session)
             val profile = me ?: session.profile
             _studentProfile.value = profile

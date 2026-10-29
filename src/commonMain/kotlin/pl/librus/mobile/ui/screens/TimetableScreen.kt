@@ -18,6 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import kotlinx.datetime.*
 import pl.librus.mobile.domain.models.TimetableDay
 import pl.librus.mobile.domain.models.TimetableSlot
@@ -28,19 +31,32 @@ import pl.librus.mobile.ui.icons.LibrusIcons
 @Composable
 fun TimetableScreen(
     timetable: List<TimetableDay>,
-    strings: Strings = Strings(AppLanguage.ENGLISH)
+    strings: Strings = Strings(AppLanguage.ENGLISH),
+    isLoading: Boolean = false,
+    syncFailed: Boolean = false,
+    onRetry: () -> Unit = {}
 ) {
     val today = Clock.System.todayIn(TimeZone.of("Europe/Warsaw"))
-    var selectedDayIndex by remember(timetable.map { it.date }, today) {
+    // Calendar navigation must not disappear just because a network request failed.
+    val calendarDays = remember(timetable, today) {
+        timetable.ifEmpty {
+            val monday = today.minus(today.dayOfWeek.isoDayNumber - 1, DateTimeUnit.DAY)
+            (0..6).map { offset ->
+                val date = monday.plus(offset, DateTimeUnit.DAY)
+                TimetableDay(date.toString(), date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() })
+            }
+        }
+    }
+    var selectedDayIndex by remember(calendarDays.map { it.date }, today) {
         mutableStateOf(
-            timetable.indexOfFirst {
+            calendarDays.indexOfFirst {
                 it.date == today.toString()
             }.takeIf { it >= 0 } ?: 0
         )
     }
     var showOnlyChanges by remember { mutableStateOf(false) }
 
-    val activeDay = timetable.getOrNull(selectedDayIndex)
+    val activeDay = calendarDays.getOrNull(selectedDayIndex)
     val lessons = remember(activeDay, showOnlyChanges) {
         val list = activeDay?.lessons ?: emptyList()
         if (showOnlyChanges) list.filter { it.isSubstitution || it.isCancelled } else list
@@ -86,7 +102,7 @@ fun TimetableScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            itemsIndexed(timetable) { index, day ->
+            itemsIndexed(calendarDays) { index, day ->
                 val isSelected = index == selectedDayIndex
                 val cleanDayName = day.dayOfWeekName.split(" ").first()
 
@@ -94,7 +110,7 @@ fun TimetableScreen(
                     onClick = { selectedDayIndex = index },
                     shape = RoundedCornerShape(12.dp),
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.height(42.dp)
+                    modifier = Modifier.heightIn(min = 48.dp)
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -113,6 +129,18 @@ fun TimetableScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (isLoading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            Text(strings.timetableLoading, modifier = Modifier.padding(vertical = 8.dp))
+        } else if (syncFailed) {
+            Text(
+                strings.timetableUnavailable,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            )
+            TextButton(onClick = onRetry) { Text(strings.retryTimetable) }
+        }
+
         // Lessons list
         if (lessons.isEmpty()) {
             Box(
@@ -124,7 +152,7 @@ fun TimetableScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (showOnlyChanges) {
+                    if (showOnlyChanges && timetable.isNotEmpty()) {
                         Icon(
                             imageVector = LibrusIcons.ThumbUp,
                             contentDescription = null,
@@ -134,7 +162,12 @@ fun TimetableScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                     }
                     Text(
-                        text = if (showOnlyChanges) strings.noChangesMessage else strings.noLessonsDay,
+                        text = when {
+                            timetable.isEmpty() && isLoading -> strings.timetableLoading
+                            timetable.isEmpty() -> strings.timetableNotLoaded
+                            showOnlyChanges -> strings.noChangesMessage
+                            else -> strings.noLessonsDay
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

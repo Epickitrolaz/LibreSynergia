@@ -120,7 +120,7 @@ class TimetableTest {
                 val payload = when (paths.last()) {
                     "Timetables" -> {
                         assertEquals("2026-10-26", request.url.parameters["weekStart"])
-                        """{"Timetable":{"2026-10-26":{"1":[{"Subject":{"Id":1},"Teacher":{"Id":"2"},"Classroom":{"Id":3}}]}}}"""
+                        """{"Timetable":{"2026-10-26":[[],[{"LessonNo":1,"Subject":{"Id":1},"Teacher":{"Id":"2"},"Classroom":{"Id":3}}]]}}"""
                     }
                     "Subjects" -> """{"Subjects":[{"Id":"1","Name":"Math"}]}"""
                     "Users" -> """{"Users":[{"Id":2,"FirstName":"Jan","LastName":"Test"}]}"""
@@ -148,6 +148,7 @@ class TimetableTest {
             val repository = LibrusRepository(storage, LibrusLiveApiClient(http))
             repository.loadDataForSession(session)
             assertEquals(cachedWeek, repository.timetable.value)
+            assertTrue(repository.timetableSyncFailed.value)
             assertFalse(repository.isLoading.value)
             assertEquals(cachedWeek, LibrusRepository(storage).timetable.value)
             repository.loadDataForSession(session.copy(activeChild = child.copy(id = "other")))
@@ -165,6 +166,7 @@ class TimetableTest {
             val repository = LibrusRepository(storage, LibrusLiveApiClient(http))
             repository.loadDataForSession(session)
             assertEquals(7, repository.timetable.value.size)
+            assertFalse(repository.timetableSyncFailed.value)
             assertTrue(repository.timetable.value.all { it.lessons.isEmpty() })
             assertEquals(repository.timetable.value, LibrusRepository(storage).timetable.value)
         }
