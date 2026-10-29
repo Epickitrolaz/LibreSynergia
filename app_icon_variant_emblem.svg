@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- LibreSynergia Variant: Transparent 3D Book Emblem (Centered & Enlarged) -->
-  <g id="book-emblem" transform="translate(-150.50, -77.95) scale(1.14)">
-    <g transform="translate(0, 1024) scale(0.08165869, -0.08165869)">
+  <!-- LibreSynergia App Icon: Variant Transparent Emblem -->
+  <g id="book-emblem" transform="translate(45.00, 98.00) scale(0.8)">
+    <g transform="translate(0, 1024) scale(0.08165869218500799, -0.08165869218500799)">
       <path id="page-lower" d="M9790 6721 c-14 -5 -70 -29 -125 -54 -263 -120 -566 -256 -825 -372
 -412 -184 -1339 -609 -1450 -665 -120 -61 -217 -129 -302 -214 -112 -110 -141
 -154 -439 -651 -10 -18 -15 -36 -10 -43 16 -26 273 32 726 163 413 119 716
