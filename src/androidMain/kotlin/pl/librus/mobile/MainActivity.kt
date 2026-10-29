@@ -12,7 +12,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val storage = remember { AndroidPersistentStorage(applicationContext) }
-            App(storage = storage)
+            val iconManager = remember { AndroidAppIconManager(applicationContext, storage) }
+            App(storage = storage, iconManager = iconManager)
         }
     }
 }

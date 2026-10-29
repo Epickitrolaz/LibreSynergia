@@ -20,11 +20,16 @@ class Strings(val lang: AppLanguage) {
     // Navigation
     val navHome = if (isPl) "Pulpit" else "Dashboard"
     val navGrades = if (isPl) "Oceny" else "Grades"
+    val navSchedule = if (isPl) "Plan" else "Schedule"
     val navTimetable = if (isPl) "Plan" else "Timetable"
     val navAttendance = if (isPl) "Frekwencja" else "Attendance"
     val navSimulator = if (isPl) "Kalkulator" else "Calculator"
     val navNotices = if (isPl) "Ogłoszenia" else "Notices"
     val navSettings = if (isPl) "Ustawienia" else "Settings"
+    val tabTimetable = if (isPl) "Plan lekcji" else "Timetable"
+    val tabAttendance = if (isPl) "Frekwencja" else "Attendance"
+    val tabGrades = if (isPl) "Oceny" else "Grades"
+    val tabSimulator = if (isPl) "Symulator" else "Simulator"
 
     // Sync Banner
     val syncInProgress = if (isPl) "Logowanie i aktualizacja danych..." else "Signing in and updating data..."
@@ -156,6 +161,10 @@ class Strings(val lang: AppLanguage) {
     val themeLight = if (isPl) "Jasny" else "Light"
     val themeDark = if (isPl) "Ciemny" else "Dark"
     val themeAmoled = "AMOLED"
+    val appIconSection = if (isPl) "Ikona aplikacji" else "App Icon"
+    val appIconDesc = if (isPl) "Wybierz wygląd ikony na ekranie głównym" else "Choose launcher icon on your home screen"
+    val appIconDefault = if (isPl) "Domyślna (Monogram LS)" else "Default (LS Monogram)"
+    val appIconVariant = if (isPl) "Izometryczna książka 3D" else "Isometric 3D Book"
     val aboutSection = if (isPl) "O aplikacji" else "About App"
     val appVersion = "Librus Synergia Mobile v1.0.0"
     val logOut = if (isPl) "Wyloguj się" else "Sign Out"

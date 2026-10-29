@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LibreSynergia — App Icon Vector Verification</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card-bg: #181b21;
+      --border: #292e39;
+      --text: #f0f3f8;
+      --text-muted: #9ba3b4;
+      --accent: #3b82f6;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 40px 20px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+    }
+    .badge {
+      background: #2563eb;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.05em;
+    }
+    .badge.secondary {
+      background: #475569;
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    .preview-box {
+      background: #000;
+      border-radius: 16px;
+      border: 1px solid #333;
+      padding: 30px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      min-height: 380px;
+      position: relative;
+      overflow: hidden;
+    }
+    .preview-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .preview-box img.main-svg {
+      width: 200px;
+      height: 200px;
+      display: block;
+      transition: all 0.3s ease;
+      filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.6));
+    }
+    .circle-icon {
+      border-radius: 50%;
+    }
+    .comparison-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background: rgba(0,0,0,0.3);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .comp-item {
+      text-align: center;
+    }
+    .comp-item span {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .comp-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 18px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .scale-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      justify-content: center;
+      padding: 10px 0;
+    }
+    .scale-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .scale-item img {
+      border-radius: 22%;
+    }
+    .file-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .file-link {
+      background: #212631;
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: monospace;
+      transition: background 0.2s;
+    }
+    .file-link:hover {
+      background: #2d3444;
+      border-color: var(--accent);
+    }
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>LibreSynergia Vector Icon Verification</h1>
+      <p class="subtitle">Lossless, pixel-perfect SVGs vectorized from original source images</p>
+    </header>
+
+    <div class="grid">
+      <!-- DEFAULT APP ICON -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Default App Icon</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">From <code>generated_image(2).jpeg</code></div>
+          </div>
+          <span class="badge">Default</span>
+        </div>
+
+        <div class="preview-box">
+          <div class="preview-item">
+            <img class="main-svg circle-icon" src="app_icon_default.svg" alt="Default Circle">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Circle (Pixel / Xiaomi)</span>
+          </div>
+          <div class="preview-item">
+            <img class="main-svg" src="app_icon_default_squircle.svg" alt="Default Squircle">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Squircle (Samsung / iOS)</span>
+          </div>
+        </div>
+
+        <!-- Scale Check -->
+        <div class="scale-row">
+          <div class="scale-item">
+            <img src="app_icon_default.svg" width="96" height="96" alt="96px">
+            <span>96px (Store)</span>
+          </div>
+          <div class="scale-item">
+            <img src="app_icon_default_squircle.svg" width="64" height="64" alt="64px">
+            <span>64px (Phone)</span>
+          </div>
+          <div class="scale-item">
+            <img src="app_icon_default_squircle.svg" width="48" height="48" alt="48px">
+            <span>48px (Home)</span>
+          </div>
+          <div class="scale-item">
+            <img src="app_icon_default_squircle.svg" width="32" height="32" alt="32px">
+            <span>32px (Status)</span>
+          </div>
+        </div>
+
+        <!-- Comparison with Original -->
+        <div class="comparison-row">
+          <div class="comp-item">
+            <img class="comp-img" src="generated_image(2).jpeg" alt="Original JPEG">
+            <span>Original JPEG</span>
+          </div>
+          <div style="font-size: 1.2rem; color: var(--text-muted);">&#10140;</div>
+          <div class="comp-item">
+            <img class="comp-img" src="app_icon_default_squircle.svg" alt="Vector SVG">
+            <span>Vector SVG (Clean)</span>
+          </div>
+          <div class="comp-item">
+            <img class="comp-img" style="background:#111; padding:8px;" src="app_icon_default_emblem.svg" alt="Emblem">
+            <span>Emblem Only</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 8px;">Generated SVG Files:</div>
+          <div class="file-links">
+            <a class="file-link" href="app_icon_default.svg" target="_blank">app_icon_default.svg</a>
+            <a class="file-link" href="app_icon_default_squircle.svg" target="_blank">app_icon_default_squircle.svg</a>
+            <a class="file-link" href="app_icon_default_emblem.svg" target="_blank">app_icon_default_emblem.svg</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- VARIANT APP ICON -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Optional Variant Icon</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">From <code>photo_5989803894457962629_y.jpg</code></div>
+          </div>
+          <span class="badge secondary">Optional</span>
+        </div>
+
+        <div class="preview-box">
+          <div class="preview-item">
+            <img class="main-svg circle-icon" src="app_icon_variant.svg" alt="Variant Circle">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Circle (Pixel / Xiaomi)</span>
+          </div>
+          <div class="preview-item">
+            <img class="main-svg" src="app_icon_variant_squircle.svg" alt="Variant Squircle">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Squircle (Samsung / iOS)</span>
+          </div>
+        </div>
+
+        <!-- Scale Check -->
+        <div class="scale-row">
+          <div class="scale-item">
+            <img src="app_icon_variant.svg" width="96" height="96" alt="96px">
+            <span>96px (Store)</span>
+          </div>
+          <div class="scale-item">
+            <img src="app_icon_variant_squircle.svg" width="64" height="64" alt="64px">
+            <span>64px (Phone)</span>
+          </div>
+          <div class="scale-item">
+            <img src="app_icon_variant_squircle.svg" width="48" height="48" alt="48px">
+            <span>48px (Home)</span>
+          </div>
+          <div class="scale-item">
+            <img src="app_icon_variant_squircle.svg" width="32" height="32" alt="32px">
+            <span>32px (Status)</span>
+          </div>
+        </div>
+
+        <!-- Comparison with Original -->
+        <div class="comparison-row">
+          <div class="comp-item">
+            <img class="comp-img" src="photo_5989803894457962629_y.jpg" alt="Original JPG">
+            <span>Original JPEG</span>
+          </div>
+          <div style="font-size: 1.2rem; color: var(--text-muted);">&#10140;</div>
+          <div class="comp-item">
+            <img class="comp-img" src="app_icon_variant_squircle.svg" alt="Vector SVG">
+            <span>Vector SVG (Clean)</span>
+          </div>
+          <div class="comp-item">
+            <img class="comp-img" style="background:#111; padding:8px;" src="app_icon_variant_emblem.svg" alt="Emblem">
+            <span>Emblem Only</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 8px;">Generated SVG Files:</div>
+          <div class="file-links">
+            <a class="file-link" href="app_icon_variant.svg" target="_blank">app_icon_variant.svg</a>
+            <a class="file-link" href="app_icon_variant_squircle.svg" target="_blank">app_icon_variant_squircle.svg</a>
+            <a class="file-link" href="app_icon_variant_emblem.svg" target="_blank">app_icon_variant_emblem.svg</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      LibreSynergia &mdash; Both icons ready for Android Adaptive Icon sets & iOS Asset Catalog integration.
+    </footer>
+  </div>
+</body>
+</html>

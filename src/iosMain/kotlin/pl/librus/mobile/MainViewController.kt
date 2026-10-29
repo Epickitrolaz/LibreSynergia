@@ -6,5 +6,6 @@ import platform.UIKit.UIViewController
 
 fun MainViewController(): UIViewController = ComposeUIViewController {
     val storage = remember { IosPersistentStorage() }
-    App(storage = storage)
+    val iconManager = remember { IosAppIconManager(storage) }
+    App(storage = storage, iconManager = iconManager)
 }
