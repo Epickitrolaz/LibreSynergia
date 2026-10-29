@@ -93,6 +93,7 @@ fun App(
     val recentGrades by repository.allGradesRaw.collectAsState()
     val timetable by repository.timetable.collectAsState()
     val timetableSyncFailed by repository.timetableSyncFailed.collectAsState()
+    val attendanceSyncFailed by repository.attendanceSyncFailed.collectAsState()
     val isDataLoading by repository.isLoading.collectAsState()
     val attendances by repository.attendances.collectAsState()
     val attendanceStats by repository.attendanceStats.collectAsState()
@@ -270,7 +271,16 @@ fun App(
                                     AttendanceScreen(
                                         stats = attendanceStats,
                                         attendances = attendances,
-                                        strings = strings
+                                        strings = strings,
+                                        isLoading = isDataLoading,
+                                        syncFailed = attendanceSyncFailed,
+                                        onRetry = {
+                                            coroutineScope.launch {
+                                                (authManager.state.value as? AuthState.Authenticated)?.let {
+                                                    repository.loadDataForSession(it.session)
+                                                }
+                                            }
+                                        }
                                     )
                                 }
                                 ScreenKey.SIMULATOR -> {

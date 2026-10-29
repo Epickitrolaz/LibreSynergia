@@ -100,6 +100,8 @@ class Strings(val lang: AppLanguage) {
     val timetableNotLoaded = if (isPl) "Plan lekcji nie został jeszcze pobrany." else "The timetable has not been loaded yet."
     val timetableLoading = if (isPl) "Pobieranie planu lekcji…" else "Loading timetable…"
     val retryTimetable = if (isPl) "Spróbuj ponownie" else "Try again"
+    val attendanceLoading = if (isPl) "Pobieranie frekwencji…" else "Loading attendance…"
+    val attendanceUnavailable = if (isPl) "Nie udało się pobrać frekwencji. Zachowano dostępne dane offline." else "Could not load attendance. Available offline data has been kept."
 
     // Attendance Screen
     val attendanceTitle = if (isPl) "Frekwencja ogólna" else "Overall Attendance"
