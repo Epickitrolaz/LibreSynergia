@@ -44,6 +44,7 @@ kotlin {
 
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation("io.ktor:ktor-client-mock:3.0.0")
         }
 
         androidMain.dependencies {
