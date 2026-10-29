@@ -51,12 +51,18 @@ DerivedData/
 Thumbs.db
 
 # ==============================================================================
-# OpenCode, Logs & Uploaded Media (Per User Request)
+# OpenCode, Logs, HTML & Uploaded Media / Images (Per User Request)
 # ==============================================================================
 .opencode/
 *.log
+logcat.log
+*.html
+/*.html
+*.svg
+/*.svg
 /*.jpg
 /*.jpeg
 /*.png
 /*.webp
-logcat.log
+/*.gif
+/*.ico

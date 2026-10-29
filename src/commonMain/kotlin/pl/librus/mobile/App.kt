@@ -397,7 +397,6 @@ fun App(
                                         }
                                     }
                                 }
-                                }
                                 ScreenKey.NOTICES -> {
                                     Column(modifier = Modifier.fillMaxSize()) {
                                         Surface(
