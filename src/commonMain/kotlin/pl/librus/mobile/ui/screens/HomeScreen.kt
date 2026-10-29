@@ -22,6 +22,7 @@ import pl.librus.mobile.domain.models.*
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
 import pl.librus.mobile.ui.components.*
+import pl.librus.mobile.ui.icons.LibrusIcons
 
 @Composable
 fun HomeScreen(
@@ -112,11 +113,22 @@ fun HomeScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Text(
-                        text = if (overallGpa != null && overallGpa >= 4.75) strings.honorRoll else strings.allSubjects,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (overallGpa != null && overallGpa >= 4.75) {
+                            Icon(
+                                imageVector = LibrusIcons.HonorRibbon,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        Text(
+                            text = if (overallGpa != null && overallGpa >= 4.75) strings.honorRoll else strings.allSubjects,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 

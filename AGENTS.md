@@ -14,14 +14,16 @@ The user will provide their own Android SDK, Xcode, and local build tools. Your 
 
 ## 2. Git & Branching Policy
 
-1. **Branch Selection**:
-   - **Unless the user specifically states to use the `main` branch, always create and work on a custom feature branch (e.g. `feature/<name>`) and fallback to `dev` if unselected.**
-   - *(Exception: When the user explicitly requests to use `main` for a session, commit directly to `main`).*
-2. **Verification on Every Modification**:
+1. **Active Working Branch**:
+   - **The default working branch is `dev`. All ongoing development occurs on `dev` (or short-lived feature branches cut from `dev`).**
+   - The `main` branch is reserved for stable releases.
+2. **Push Code to Remote After Every Session**:
+   - **Always push your committed changes to the remote repository (`git push origin <branch>`) after each session.**
+3. **Verification on Every Modification**:
    - **After EACH modification, the build MUST be tested for all available platforms** (e.g. `./gradlew testDebugUnitTest`, `./gradlew compileIosMainKotlinMetadata`, `./gradlew assembleDebug`).
-3. **Commit Every Change**:
+4. **Commit Every Change**:
    - **Every change must be committed to git immediately after verification.** Keep git commits frequent, focused, and accompanied by clear commit messages.
-4. **Do Not Commit Reference & Cache Files**:
+5. **Do Not Commit Reference & Cache Files**:
    - Do NOT commit files in `references/`, build artifacts (`build/`, `.gradle/`), local sdk paths (`local.properties`), or secrets.
 
 ---
@@ -64,6 +66,8 @@ The following files and folders have been present in this repository from the st
    When implementing Gateway 2.0, always persist `DeviceCookie` (which lives on `Path=/OAuth`). Without it, Librus triggers Captcha challenges on new logins.
 7. **Rate Limit Respect**:
    Cap concurrent connections to 4–6 per host. Polling should never be more frequent than 15 minutes.
+8. **Custom Flat SVG / Vector Icons Only**:
+   Always use custom, flat SVG or Compose ImageVector icons (`LibrusIcons`) instead of raw Unicode emojis. Never use raw emojis in UI strings or layouts.
 
 ---
 
