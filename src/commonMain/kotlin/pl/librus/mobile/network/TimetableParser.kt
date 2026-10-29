@@ -20,9 +20,14 @@ internal object TimetableParser {
         return (0..6).map { offset ->
             val date = weekStart.plus(offset, DateTimeUnit.DAY)
             val periods = days[date.toString()]
-            // Empty days may be encoded as [] instead of {}.
-            require(periods == null || periods is JsonObject || periods == JsonArray(emptyList()))
-            val lessons = (periods as? JsonObject).orEmpty().flatMap { (period, entries) ->
+            // Librus returns arrays of period arrays; some backends key periods by number.
+            val periodEntries = when (periods) {
+                null -> emptyList()
+                is JsonArray -> periods.mapIndexed { index, entries -> index.toString() to entries }
+                is JsonObject -> periods.entries.map { it.key to it.value }
+                else -> throw IllegalArgumentException("Unsupported timetable day")
+            }
+            val lessons = periodEntries.flatMap { (period, entries) ->
                 require(entries is JsonArray)
                 entries.mapIndexedNotNull { index, element ->
                     val slot = element as? JsonObject ?: return@mapIndexedNotNull null
@@ -37,8 +42,8 @@ internal object TimetableParser {
                         classroom = resolve(slot, "Classroom", classrooms).orEmpty(),
                         hourFrom = slot.text("HourFrom").orEmpty(),
                         hourTo = slot.text("HourTo").orEmpty(),
-                        isCancelled = slot.flag("IsCancelled"),
-                        isSubstitution = slot.flag("IsSubstitution"),
+                        isCancelled = slot.flag("IsCancelled") || slot.flag("IsCanceled"),
+                        isSubstitution = slot.flag("IsSubstitution") || slot.flag("IsSubstitutionClass"),
                         orgSubjectName = resolve(slot, "OrgSubject", subjects),
                         orgTeacherName = resolve(slot, "OrgTeacher", teachers),
                         substitutionNote = slot.text("SubstitutionNote"),

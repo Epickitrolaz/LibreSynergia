@@ -75,6 +75,25 @@ class TimetableTest {
     }
 
     @Test
+    fun parsesLibrusArrayDaysAndNativeChangeFlags() {
+        val root = Json.parseToJsonElement("""
+            {"Timetable":{"2026-10-26":[[],[
+              {"LessonNo":"1","Subject":{"Id":1},"IsCanceled":true},
+              {"LessonNo":1,"Subject":{"Id":"2"},"IsSubstitutionClass":true,
+               "OrgSubject":{"Id":1}}
+            ],[],[{"LessonNo":3,"Subject":{"Id":1}}]],"2026-10-27":[]}}
+        """).jsonObject
+        val week = assertNotNull(TimetableParser.parse(
+            root, monday, mapOf("1" to "Math", "2" to "History"), emptyMap(), emptyMap()
+        ))
+        assertEquals(listOf(1, 1, 3), week.first().lessons.map { it.lessonNo })
+        assertTrue(week.first().lessons.first().isCancelled)
+        assertTrue(week.first().lessons[1].isSubstitution)
+        assertEquals("Math", week.first().lessons[1].orgSubjectName)
+        assertTrue(week.drop(1).all { it.lessons.isEmpty() })
+    }
+
+    @Test
     fun missingPayloadIsFailureButEmptyWeekIsValid() {
         assertNull(TimetableParser.parse(Json.parseToJsonElement("{}").jsonObject, monday, emptyMap(), emptyMap(), emptyMap()))
         val week = assertNotNull(TimetableParser.parse(
