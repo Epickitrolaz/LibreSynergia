@@ -3,10 +3,10 @@ package pl.librus.mobile
 import pl.librus.mobile.data.storage.PersistentStorage
 import pl.librus.mobile.ui.icons.AppIcon
 import pl.librus.mobile.ui.icons.AppIconManager
-import platform.UIKit.UIApplication
 
 class IosAppIconManager(
-    private val storage: PersistentStorage
+    private val storage: PersistentStorage,
+    private val onIconChange: ((AppIcon) -> Unit)? = null
 ) : AppIconManager {
 
     private var current: AppIcon
@@ -20,14 +20,7 @@ class IosAppIconManager(
         current = icon
         storage.putString("app_icon_selected", icon.id)
         try {
-            val app = UIApplication.sharedApplication
-            if (app.supportsAlternateIcons) {
-                val alternateName = when (icon) {
-                    AppIcon.DEFAULT -> null
-                    AppIcon.VARIANT -> "AppIconVariant"
-                }
-                app.setAlternateIconName(alternateName) { _ -> }
-            }
+            onIconChange?.invoke(icon)
         } catch (_: Throwable) {
         }
     }
