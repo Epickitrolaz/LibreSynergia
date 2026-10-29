@@ -45,7 +45,7 @@ internal object TimetableParser {
                         groupName = (slot["Group"] as? JsonObject)?.text("Name") ?: slot.text("Group")
                     )
                 }
-            }.sortedWith(compareBy({ it.lessonNo }, { it.hourFrom }))
+            }.sortedBy { it.lessonNo }
             TimetableDay(date.toString(), date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }, lessons)
         }
     }
