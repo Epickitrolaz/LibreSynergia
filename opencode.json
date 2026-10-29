@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "name": "librus-mobile",
+  "description": "Android and iOS client for Librus Synergia",
+  "instructions": "Follow AGENTS.md and docs/ for domain models, API endpoints, and authentication rules. Never use the dead password grant or HTML scraping. Treat references/ as read-only.",
+  "ignore": [
+    "references/**",
+    ".gradle/**",
+    "build/**",
+    "Pods/**",
+    "DerivedData/**"
+  ]
+}
