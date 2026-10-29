@@ -32,10 +32,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.auth.AuthState
+import pl.librus.mobile.ui.Strings
 
 @Composable
 fun LoginScreen(
     authState: AuthState,
+    strings: Strings,
     onLoginPortal: (String, String) -> Unit,
     onLoginGateway: (String, String) -> Unit,
     onLoginDemo: () -> Unit,
@@ -82,14 +84,14 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Librus Mobile",
+                text = strings.appName,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
             Text(
-                text = "Nowoczesny, niezależny klient dla Librus Synergia",
+                text = strings.appSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -108,14 +110,14 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "🚀 Przetestuj od razu bez logowania",
+                        text = strings.demoTitle,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Wypróbuj aplikację z pełnymi danymi demonstracyjnymi (oceny, plan lekcji, zastępstwa).",
+                        text = strings.demoDesc,
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -128,7 +130,7 @@ fun LoginScreen(
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Uruchom Tryb Demo")
+                        Text(strings.demoButton)
                     }
                 }
             }
@@ -155,7 +157,7 @@ fun LoginScreen(
                                 selectedTab = 0
                                 onClearError()
                             },
-                            text = { Text("Portal Rodzina", fontWeight = FontWeight.SemiBold) }
+                            text = { Text(strings.tabPortal, fontWeight = FontWeight.SemiBold) }
                         )
                         Tab(
                             selected = selectedTab == 1,
@@ -163,7 +165,7 @@ fun LoginScreen(
                                 selectedTab = 1
                                 onClearError()
                             },
-                            text = { Text("Login Synergia", fontWeight = FontWeight.SemiBold) }
+                            text = { Text(strings.tabGateway, fontWeight = FontWeight.SemiBold) }
                         )
                     }
 
@@ -193,7 +195,7 @@ fun LoginScreen(
                             if (errorMessage != null) onClearError()
                         },
                         label = {
-                            Text(if (selectedTab == 0) "Adres e-mail Portal Rodzina" else "Login szkolny (np. 1234567u)")
+                            Text(if (selectedTab == 0) strings.labelEmail else strings.labelGatewayLogin)
                         },
                         leadingIcon = {
                             Icon(
@@ -219,7 +221,7 @@ fun LoginScreen(
                             password = it
                             if (errorMessage != null) onClearError()
                         },
-                        label = { Text("Hasło") },
+                        label = { Text(strings.labelPassword) },
                         leadingIcon = {
                             Icon(Icons.Default.Lock, contentDescription = null)
                         },
@@ -227,7 +229,7 @@ fun LoginScreen(
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
                                     if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (passwordVisible) "Ukryj hasło" else "Pokaż hasło"
+                                    contentDescription = if (passwordVisible) strings.passwordHide else strings.passwordShow
                                 )
                             }
                         },
@@ -275,22 +277,11 @@ fun LoginScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Zaloguj się", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text(strings.actionSignIn, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Projekt nieoficjalny (wygenerowany przez AI) • Inspiracja: szkolny.eu\nUżytkownik korzysta na własną odpowiedzialność.",
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 11.sp,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                lineHeight = 15.sp
-            )
         }
     }
 }

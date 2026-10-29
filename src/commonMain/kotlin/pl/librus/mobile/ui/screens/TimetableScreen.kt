@@ -8,13 +8,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -22,14 +20,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.models.TimetableDay
 import pl.librus.mobile.domain.models.TimetableSlot
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 
 @Composable
 fun TimetableScreen(
-    timetable: List<TimetableDay>
+    timetable: List<TimetableDay>,
+    strings: Strings = Strings(AppLanguage.ENGLISH)
 ) {
     var selectedDayIndex by remember {
         mutableStateOf(
-            timetable.indexOfFirst { it.dayOfWeekName.contains("Dzisiaj") }.takeIf { it >= 0 } ?: 0
+            timetable.indexOfFirst {
+                it.dayOfWeekName.contains("Dzisiaj") || it.dayOfWeekName.contains("Today")
+            }.takeIf { it >= 0 } ?: 0
         )
     }
     var showOnlyChanges by remember { mutableStateOf(false) }
@@ -53,7 +56,7 @@ fun TimetableScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Plan lekcji",
+                text = strings.timetableTitle,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -62,7 +65,7 @@ fun TimetableScreen(
             FilterChip(
                 selected = showOnlyChanges,
                 onClick = { showOnlyChanges = !showOnlyChanges },
-                label = { Text("Tylko zmiany", fontSize = 12.sp) },
+                label = { Text(strings.filterChangesOnly, fontSize = 12.sp) },
                 leadingIcon = {
                     Icon(
                         Icons.Default.SwapHoriz,
@@ -116,7 +119,7 @@ fun TimetableScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (showOnlyChanges) "Brak zastępstw i odwołanych lekcji w tym dniu! 👍" else "Brak lekcji w tym dniu.",
+                    text = if (showOnlyChanges) strings.noChangesMessage else strings.noLessonsDay,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -127,7 +130,7 @@ fun TimetableScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(lessons) { slot ->
-                    LessonCard(slot = slot)
+                    LessonCard(slot = slot, strings = strings)
                 }
             }
         }
@@ -135,7 +138,10 @@ fun TimetableScreen(
 }
 
 @Composable
-private fun LessonCard(slot: TimetableSlot) {
+private fun LessonCard(
+    slot: TimetableSlot,
+    strings: Strings
+) {
     val cardColor = when {
         slot.isSubstitution -> Color(0xFFFFF8E1) // Warm amber tint
         slot.isCancelled -> Color(0xFFFFEBEE) // Soft red tint
@@ -199,7 +205,7 @@ private fun LessonCard(slot: TimetableSlot) {
                         color = Color(0xFFC62828)
                     )
                     Text(
-                        text = "Lekcja odwołana",
+                        text = strings.lessonCancelled,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFC62828)
@@ -213,7 +219,7 @@ private fun LessonCard(slot: TimetableSlot) {
                     )
                     if (slot.orgSubjectName != null) {
                         Text(
-                            text = "Zamiast: ${slot.orgSubjectName}",
+                            text = "${strings.replaces}${slot.orgSubjectName}",
                             fontSize = 12.sp,
                             textDecoration = TextDecoration.LineThrough,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

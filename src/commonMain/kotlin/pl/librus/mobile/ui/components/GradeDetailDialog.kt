@@ -21,11 +21,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import pl.librus.mobile.domain.models.Grade
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 
 @Composable
 fun GradeDetailDialog(
     grade: Grade,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    strings: Strings = Strings(AppLanguage.ENGLISH)
 ) {
     val gradeColor = try {
         Color(parseColorHex(grade.colorHex))
@@ -58,7 +61,7 @@ fun GradeDetailDialog(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = grade.categoryName.ifEmpty { "Ocena bieżąca" },
+                            text = grade.categoryName.ifEmpty { strings.regularGrade },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -87,15 +90,15 @@ fun GradeDetailDialog(
                 // Detail Rows
                 DetailRow(
                     icon = Icons.Default.Scale,
-                    label = "Waga oceny",
-                    value = "${grade.weight.toInt()}" + if (grade.countToAverage) " (liczy się do średniej)" else " (nie liczy się)"
+                    label = strings.gradeWeight,
+                    value = "${grade.weight.toInt()}" + if (grade.countToAverage) strings.countsToAverage else strings.doesNotCountToAverage
                 )
 
                 if (grade.date.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
                     DetailRow(
                         icon = Icons.Default.CalendarToday,
-                        label = "Data wpisania",
+                        label = strings.entryDate,
                         value = grade.date
                     )
                 }
@@ -104,7 +107,7 @@ fun GradeDetailDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                     DetailRow(
                         icon = Icons.Default.Person,
-                        label = "Nauczyciel",
+                        label = strings.teacher,
                         value = grade.teacherName
                     )
                 }
@@ -113,7 +116,7 @@ fun GradeDetailDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                     DetailRow(
                         icon = Icons.AutoMirrored.Filled.Comment,
-                        label = "Komentarz nauczyciela",
+                        label = strings.teacherComment,
                         value = grade.comment
                     )
                 }
@@ -125,7 +128,7 @@ fun GradeDetailDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Zamknij")
+                    Text(strings.close)
                 }
             }
         }

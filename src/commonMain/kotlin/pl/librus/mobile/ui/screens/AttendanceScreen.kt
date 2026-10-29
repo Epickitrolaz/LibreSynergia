@@ -9,19 +9,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.models.Attendance
 import pl.librus.mobile.domain.models.AttendanceStats
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 import pl.librus.mobile.ui.components.parseColorHex
 
 @Composable
 fun AttendanceScreen(
     stats: AttendanceStats,
-    attendances: List<Attendance>
+    attendances: List<Attendance>,
+    strings: Strings = Strings(AppLanguage.ENGLISH)
 ) {
     Column(
         modifier = Modifier
@@ -43,13 +45,13 @@ fun AttendanceScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Frekwencja ogólna",
+                            text = strings.attendanceTitle,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Łącznie zrealizowanych: ${stats.totalHours} godz.",
+                            text = "${strings.totalHoursRealized}${stats.totalHours} ${strings.hoursShort}",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
@@ -70,10 +72,10 @@ fun AttendanceScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    StatPill(count = stats.presentCount, label = "Obecność", color = Color(0xFF2E7D32))
-                    StatPill(count = stats.lateCount, label = "Spóźnienia", color = Color(0xFFFB8C00))
-                    StatPill(count = stats.excusedCount, label = "Usprawiedl.", color = Color(0xFF1E88E5))
-                    StatPill(count = stats.unexcusedCount, label = "Nieuspraw.", color = Color(0xFFE53935))
+                    StatPill(count = stats.presentCount, label = strings.attPresent, color = Color(0xFF2E7D32))
+                    StatPill(count = stats.lateCount, label = strings.attLate, color = Color(0xFFFB8C00))
+                    StatPill(count = stats.excusedCount, label = strings.attExcused, color = Color(0xFF1E88E5))
+                    StatPill(count = stats.unexcusedCount, label = strings.attUnexcused, color = Color(0xFFE53935))
                 }
             }
         }
@@ -81,7 +83,7 @@ fun AttendanceScreen(
         Spacer(modifier = Modifier.height(18.dp))
 
         Text(
-            text = "Dziennik obecności",
+            text = strings.attendanceLog,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -94,7 +96,7 @@ fun AttendanceScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Brak wpisów o frekwencji.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(strings.noAttendanceRecords, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(
