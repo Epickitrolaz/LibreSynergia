@@ -71,6 +71,28 @@ class LibrusLiveApiClient(
         }
     }
 
+    /** Null denotes a failed/incomplete sync, not an empty attendance register. */
+    suspend fun fetchAttendances(session: UserSession): List<Attendance>? {
+        val root = fetchJson(session, "Attendances") as? JsonObject ?: return null
+        val entries = root["Attendances"] as? JsonArray ?: return null
+        if (entries.isEmpty()) return emptyList()
+        return try {
+            val nativeTypes = fetchJson(session, "Attendances/Types") as? JsonObject
+            val types = nativeTypes?.let { AttendanceParser.types(it) }
+                ?: (fetchJson(session, "AttendanceTypes") as? JsonObject)?.let { AttendanceParser.types(it) }
+                ?: return null
+            val subjects = fetchNames(session, "Subjects") { it.text("Name").orEmpty() }
+            val lessons = fetchNames(session, "Lessons") {
+                (it["Subject"] as? JsonObject)?.text("Id").orEmpty()
+            }
+            AttendanceParser.parse(entries, types, subjects, lessons)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private suspend fun fetchNames(
         session: UserSession,
         endpoint: String,

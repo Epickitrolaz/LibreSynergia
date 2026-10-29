@@ -40,6 +40,9 @@ class LibrusRepository(
 
     private val _attendances = MutableStateFlow<List<Attendance>>(emptyList())
     val attendances: StateFlow<List<Attendance>> = _attendances.asStateFlow()
+    private var attendanceOwner: String? = null
+    private val _attendanceSyncFailed = MutableStateFlow(false)
+    val attendanceSyncFailed: StateFlow<Boolean> = _attendanceSyncFailed.asStateFlow()
 
     private val _attendanceStats = MutableStateFlow(AttendanceStats())
     val attendanceStats: StateFlow<AttendanceStats> = _attendanceStats.asStateFlow()
@@ -75,16 +78,23 @@ class LibrusRepository(
 
         timetableOwner = cached.timetableOwner
         _timetable.value = if (timetableOwner != null) cached.timetable else emptyList()
-        _attendances.value = cached.attendances
-        _attendanceStats.value = cached.attendanceStats
+        attendanceOwner = cached.attendanceOwner
+        _attendances.value = if (attendanceOwner != null) cached.attendances else emptyList()
+        _attendanceStats.value = AttendanceCalculator.calculateStats(_attendances.value)
         _notices.value = cached.notices
     }
 
     suspend fun loadDataForSession(session: UserSession) {
         _isLoading.value = true
         _timetableSyncFailed.value = false
+        _attendanceSyncFailed.value = false
         try {
             val owner = "${session.backendType}:${session.identifier}:${session.activeChild.id}"
+            if (attendanceOwner != owner) {
+                _attendances.value = emptyList()
+                _attendanceStats.value = AttendanceStats()
+                attendanceOwner = owner
+            }
             if (timetableOwner != owner) {
                 _timetable.value = emptyList()
                 timetableOwner = owner
@@ -104,6 +114,12 @@ class LibrusRepository(
             val week = liveApiClient?.fetchTimetable(session)
             _timetableSyncFailed.value = week == null
             week?.let { _timetable.value = it }
+            val attendance = liveApiClient?.fetchAttendances(session)
+            _attendanceSyncFailed.value = attendance == null
+            attendance?.let {
+                _attendances.value = it
+                _attendanceStats.value = AttendanceCalculator.calculateStats(it)
+            }
             val me = liveApiClient?.fetchMe(session)
             val profile = me ?: session.profile
             _studentProfile.value = profile
@@ -126,8 +142,6 @@ class LibrusRepository(
             val groups = GradeCalculator.groupGradesBySubject(subjects, rawGrades)
             _grades.value = groups
 
-            _attendances.value = MockDataProvider.attendances
-            _attendanceStats.value = AttendanceCalculator.calculateStats(MockDataProvider.attendances)
             _notices.value = MockDataProvider.notices
 
             // Save to persistent storage cache
@@ -142,6 +156,7 @@ class LibrusRepository(
                 timetable = _timetable.value,
                 timetableOwner = timetableOwner,
                 attendances = _attendances.value,
+                attendanceOwner = attendanceOwner,
                 attendanceStats = _attendanceStats.value,
                 notices = _notices.value
             )
@@ -186,6 +201,7 @@ class LibrusRepository(
             timetable = _timetable.value,
             timetableOwner = timetableOwner,
             attendances = _attendances.value,
+            attendanceOwner = attendanceOwner,
             attendanceStats = _attendanceStats.value,
             notices = _notices.value
         )
