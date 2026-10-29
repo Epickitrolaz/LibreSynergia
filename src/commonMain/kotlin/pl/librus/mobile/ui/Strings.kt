@@ -30,7 +30,7 @@ class Strings(val lang: AppLanguage) {
     val syncInProgress = if (isPl) "Logowanie i aktualizacja danych..." else "Signing in and updating data..."
 
     // Login Screen
-    val demoTitle = if (isPl) "🚀 Przetestuj od razu bez logowania" else "🚀 Try Demo Mode Immediately"
+    val demoTitle = if (isPl) "Przetestuj od razu bez logowania" else "Try Demo Mode Immediately"
     val demoDesc = if (isPl) "Wypróbuj aplikację z pełnymi danymi demonstracyjnymi (oceny, plan lekcji, zastępstwa)." else "Explore the app with preloaded realistic school data (grades, timetable, substitutions)."
     val demoButton = if (isPl) "Uruchom Tryb Demo" else "Launch Demo Mode"
     val tabPortal = if (isPl) "Portal Rodzina" else "Family Portal"
@@ -45,11 +45,11 @@ class Strings(val lang: AppLanguage) {
     // Home Screen
     val switchChild = if (isPl) "Zmień" else "Switch"
     val luckyNumber = if (isPl) "Szczęśliwy numerek" else "Lucky Number"
-    val luckyNumberWon = if (isPl) "🎉 Masz szczęśliwy numerek!" else "🎉 You have today's lucky number!"
+    val luckyNumberWon = if (isPl) "Masz szczęśliwy numerek!" else "You have today's lucky number!"
     val luckyNumberWonDesc = if (isPl) "Jesteś dzisiaj zwolniony z odpowiedzi ustnej!" else "You are exempt from oral questions today!"
     val yourRegisterNo = if (isPl) "Twój numer w dzienniku: " else "Your register number: "
     val gradeAverage = if (isPl) "Średnia ocen" else "GPA Average"
-    val honorRoll = if (isPl) "Pasek czerwony 🎖️" else "Honor Roll 🎖️"
+    val honorRoll = if (isPl) "Pasek czerwony" else "Honor Roll"
     val allSubjects = if (isPl) "Wszystkie przedmioty" else "All subjects"
     val attendance = if (isPl) "Frekwencja" else "Attendance"
     val hours = if (isPl) "godzin" else "hours"
@@ -94,7 +94,7 @@ class Strings(val lang: AppLanguage) {
     val filterChangesOnly = if (isPl) "Tylko zmiany" else "Changes only"
     val lessonCancelled = if (isPl) "Lekcja odwołana" else "Lesson cancelled"
     val replaces = if (isPl) "Zamiast: " else "Replaces: "
-    val noChangesMessage = if (isPl) "Brak zastępstw i odwołanych lekcji w tym dniu! 👍" else "No substitutions or cancelled lessons on this day! 👍"
+    val noChangesMessage = if (isPl) "Brak zastępstw i odwołanych lekcji w tym dniu." else "No substitutions or cancelled lessons on this day."
     val noLessonsDay = if (isPl) "Brak lekcji w tym dniu." else "No lessons on this day."
 
     // Attendance Screen
@@ -123,7 +123,7 @@ class Strings(val lang: AppLanguage) {
     val clear = if (isPl) "Wyczyść" else "Clear"
     val simGradeLabel = if (isPl) "Ocena: " else "Grade: "
     val simWeightLabel = if (isPl) ", waga: " else ", weight: "
-    val targetCalcHeader = if (isPl) "🎯 Kalkulator celu: \"Co muszę dostać?\"" else "🎯 Target Goal: \"What grade do I need?\""
+    val targetCalcHeader = if (isPl) "Kalkulator celu: \"Co muszę dostać?\"" else "Target Goal: \"What grade do I need?\""
     val targetAvgLabel = if (isPl) "Docelowa średnia" else "Target Average"
     val examWeightLabel = if (isPl) "Waga sprawdzianu" else "Exam Weight"
     fun targetSuccess(req: Double) = if (isPl) "Musisz otrzymać ocenę minimum: $req" else "You need to score at least: $req"

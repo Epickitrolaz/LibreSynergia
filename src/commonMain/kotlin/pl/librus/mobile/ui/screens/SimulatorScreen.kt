@@ -23,6 +23,7 @@ import pl.librus.mobile.domain.calculations.GradeCalculator
 import pl.librus.mobile.domain.models.SubjectGradeGroup
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.icons.LibrusIcons
 
 @Composable
 fun SimulatorScreen(
@@ -162,7 +163,12 @@ fun SimulatorScreen(
                         )
                     }
 
-                    Text("➔", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        imageVector = LibrusIcons.ArrowForward,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(strings.projectedAvg, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -274,11 +280,20 @@ fun SimulatorScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = strings.targetCalcHeader,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = LibrusIcons.TargetGoal,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = strings.targetCalcHeader,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row(

@@ -66,6 +66,8 @@ The following files and folders have been present in this repository from the st
    When implementing Gateway 2.0, always persist `DeviceCookie` (which lives on `Path=/OAuth`). Without it, Librus triggers Captcha challenges on new logins.
 7. **Rate Limit Respect**:
    Cap concurrent connections to 4–6 per host. Polling should never be more frequent than 15 minutes.
+8. **Custom Flat SVG / Vector Icons Only**:
+   Always use custom, flat SVG or Compose ImageVector icons (`LibrusIcons`) instead of raw Unicode emojis. Never use raw emojis in UI strings or layouts.
 
 ---
 

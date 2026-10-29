@@ -19,6 +19,7 @@ import pl.librus.mobile.domain.models.LuckyNumber
 import pl.librus.mobile.domain.models.StudentProfile
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.icons.LibrusIcons
 
 @Composable
 fun LuckyNumberCard(
@@ -67,7 +68,7 @@ fun LuckyNumberCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        imageVector = if (isLucky) LibrusIcons.Celebration else Icons.Default.Star,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)

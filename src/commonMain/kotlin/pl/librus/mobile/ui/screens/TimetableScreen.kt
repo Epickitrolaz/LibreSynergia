@@ -22,6 +22,7 @@ import pl.librus.mobile.domain.models.TimetableDay
 import pl.librus.mobile.domain.models.TimetableSlot
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.icons.LibrusIcons
 
 @Composable
 fun TimetableScreen(
@@ -118,11 +119,24 @@ fun TimetableScreen(
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = if (showOnlyChanges) strings.noChangesMessage else strings.noLessonsDay,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (showOnlyChanges) {
+                        Icon(
+                            imageVector = LibrusIcons.ThumbUp,
+                            contentDescription = null,
+                            tint = Color(0xFF2E7D32),
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                    Text(
+                        text = if (showOnlyChanges) strings.noChangesMessage else strings.noLessonsDay,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         } else {
             LazyColumn(
