@@ -87,18 +87,27 @@
       border: 1px solid #333;
       padding: 30px;
       display: flex;
-      justify-content: center;
+      justify-content: space-around;
       align-items: center;
       min-height: 380px;
       position: relative;
       overflow: hidden;
     }
+    .preview-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
     .preview-box img.main-svg {
-      width: 280px;
-      height: 280px;
+      width: 200px;
+      height: 200px;
       display: block;
       transition: all 0.3s ease;
       filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.6));
+    }
+    .circle-icon {
+      border-radius: 50%;
     }
     .comparison-row {
       display: flex;
@@ -191,7 +200,14 @@
         </div>
 
         <div class="preview-box">
-          <img class="main-svg" src="app_icon_default_squircle.svg" alt="Default App Icon">
+          <div class="preview-item">
+            <img class="main-svg circle-icon" src="app_icon_default.svg" alt="Default Circle">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Circle (Pixel / Xiaomi)</span>
+          </div>
+          <div class="preview-item">
+            <img class="main-svg" src="app_icon_default_squircle.svg" alt="Default Squircle">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Squircle (Samsung / iOS)</span>
+          </div>
         </div>
 
         <!-- Scale Check -->
@@ -252,7 +268,14 @@
         </div>
 
         <div class="preview-box">
-          <img class="main-svg" src="app_icon_variant_squircle.svg" alt="Variant App Icon">
+          <div class="preview-item">
+            <img class="main-svg circle-icon" src="app_icon_variant.svg" alt="Variant Circle">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Circle (Pixel / Xiaomi)</span>
+          </div>
+          <div class="preview-item">
+            <img class="main-svg" src="app_icon_variant_squircle.svg" alt="Variant Squircle">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Squircle (Samsung / iOS)</span>
+          </div>
         </div>
 
         <!-- Scale Check -->
