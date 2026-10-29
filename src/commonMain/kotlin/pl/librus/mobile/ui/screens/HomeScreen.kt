@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.calculations.GradeCalculator
 import pl.librus.mobile.domain.models.*
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 import pl.librus.mobile.ui.components.*
 
 @Composable
@@ -32,6 +34,7 @@ fun HomeScreen(
     timetable: List<TimetableDay>,
     attendanceStats: AttendanceStats,
     notices: List<SchoolNotice>,
+    strings: Strings = Strings(AppLanguage.ENGLISH),
     onSwitchChild: (String) -> Unit,
     onNavigateToGrades: () -> Unit,
     onNavigateToTimetable: () -> Unit,
@@ -41,7 +44,7 @@ fun HomeScreen(
 ) {
     val overallGpa = remember(grades) { GradeCalculator.calculateOverallGpa(grades) }
     val todaySchedule = remember(timetable) {
-        timetable.find { it.dayOfWeekName.contains("Dzisiaj") } ?: timetable.firstOrNull()
+        timetable.find { it.dayOfWeekName.contains("Dzisiaj") || it.dayOfWeekName.contains("Today") } ?: timetable.firstOrNull()
     }
     val unreadNotices = remember(notices) { notices.filter { !it.isRead } }
 
@@ -56,7 +59,8 @@ fun HomeScreen(
             profile = profile,
             children = children,
             activeChild = activeChild,
-            onSwitchChild = onSwitchChild
+            onSwitchChild = onSwitchChild,
+            strings = strings
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -64,7 +68,8 @@ fun HomeScreen(
         // Lucky Number Card
         LuckyNumberCard(
             luckyNumber = luckyNumber,
-            profile = profile
+            profile = profile,
+            strings = strings
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -88,7 +93,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Średnia ocen",
+                            text = strings.gradeAverage,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -108,7 +113,7 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = if (overallGpa != null && overallGpa >= 4.75) "Pasek czerwony 🎖️" else "Wszystkie przedmioty",
+                        text = if (overallGpa != null && overallGpa >= 4.75) strings.honorRoll else strings.allSubjects,
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -129,7 +134,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Frekwencja",
+                            text = strings.attendance,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -149,7 +154,7 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${attendanceStats.presentCount}/${attendanceStats.totalHours} godzin",
+                        text = "${attendanceStats.presentCount}/${attendanceStats.totalHours} ${strings.hours}",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
@@ -181,7 +186,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Nowe ogłoszenie szkolne (${unreadNotices.size})",
+                            text = "${strings.newSchoolNotice} (${unreadNotices.size})",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -217,12 +222,12 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Plan lekcji: ${todaySchedule?.dayOfWeekName ?: "Dzisiaj"}",
+                        text = "${strings.timetableToday}${todaySchedule?.dayOfWeekName ?: ""}",
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium
                     )
                     TextButton(onClick = onNavigateToTimetable) {
-                        Text("Zobacz cały")
+                        Text(strings.viewAll)
                     }
                 }
 
@@ -231,7 +236,7 @@ fun HomeScreen(
                 val lessons = todaySchedule?.lessons?.take(4) ?: emptyList()
                 if (lessons.isEmpty()) {
                     Text(
-                        text = "Brak zaplanowanych lekcji na dzisiaj.",
+                        text = strings.noLessonsToday,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -268,7 +273,7 @@ fun HomeScreen(
                                     color = Color(0xFFFFF3E0)
                                 ) {
                                     Text(
-                                        text = "Zastępstwo",
+                                        text = strings.badgeSubstitution,
                                         color = Color(0xFFE65100),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
@@ -281,7 +286,7 @@ fun HomeScreen(
                                     color = Color(0xFFFFEBEE)
                                 ) {
                                     Text(
-                                        text = "Odwołana",
+                                        text = strings.badgeCancelled,
                                         color = Color(0xFFC62828),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
@@ -311,12 +316,12 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Ostatnie oceny",
+                        text = strings.recentGrades,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium
                     )
                     TextButton(onClick = onNavigateToGrades) {
-                        Text("Wszystkie")
+                        Text(strings.all)
                     }
                 }
 
@@ -325,7 +330,7 @@ fun HomeScreen(
                 val previewGrades = recentGrades.take(5)
                 if (previewGrades.isEmpty()) {
                     Text(
-                        text = "Brak ostatnich ocen.",
+                        text = strings.noRecentGrades,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -346,7 +351,7 @@ fun HomeScreen(
                                     fontSize = 14.sp
                                 )
                                 Text(
-                                    text = "${grade.categoryName.ifEmpty { "Ocena" }} • waga: ${grade.weight.toInt()}",
+                                    text = "${grade.categoryName.ifEmpty { "Grade" }} • ${strings.weightPrefix} ${grade.weight.toInt()}",
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

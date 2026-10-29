@@ -17,10 +17,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.models.SchoolNotice
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 
 @Composable
 fun NoticesScreen(
     notices: List<SchoolNotice>,
+    strings: Strings = Strings(AppLanguage.ENGLISH),
     onMarkAsRead: (String) -> Unit
 ) {
     Column(
@@ -30,7 +33,7 @@ fun NoticesScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "Ogłoszenia szkolne",
+            text = strings.noticesTitle,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -43,7 +46,7 @@ fun NoticesScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Brak nowych ogłoszeń.",
+                    text = strings.noNotices,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -96,7 +99,7 @@ fun NoticesScreen(
                                         color = MaterialTheme.colorScheme.primary
                                     ) {
                                         Text(
-                                            text = "Nowe",
+                                            text = strings.newNoticeBadge,
                                             color = Color.White,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
@@ -143,7 +146,7 @@ fun NoticesScreen(
                                     ) {
                                         Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Przeczytane", fontSize = 11.sp)
+                                        Text(strings.markRead, fontSize = 11.sp)
                                     }
                                 }
                             }

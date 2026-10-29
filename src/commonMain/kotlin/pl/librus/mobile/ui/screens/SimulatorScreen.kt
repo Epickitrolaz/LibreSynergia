@@ -14,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -22,10 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.calculations.GradeCalculator
 import pl.librus.mobile.domain.models.SubjectGradeGroup
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 
 @Composable
 fun SimulatorScreen(
-    groups: List<SubjectGradeGroup>
+    groups: List<SubjectGradeGroup>,
+    strings: Strings = Strings(AppLanguage.ENGLISH)
 ) {
     var selectedSubjectIndex by remember { mutableStateOf(0) }
     val currentGroup = groups.getOrNull(selectedSubjectIndex)
@@ -81,13 +83,13 @@ fun SimulatorScreen(
                 Spacer(modifier = Modifier.width(14.dp))
                 Column {
                     Text(
-                        text = "Kalkulator i symulator ocen",
+                        text = strings.simHeader,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = "Sprawdź jak przyszłe oceny wpłyną na Twoją średnią",
+                        text = strings.simSubtitle,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
@@ -99,7 +101,7 @@ fun SimulatorScreen(
 
         // Subject Selector
         Text(
-            text = "Wybierz przedmiot:",
+            text = strings.selectSubject,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold
         )
@@ -113,7 +115,7 @@ fun SimulatorScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = currentGroup?.subject?.name ?: "Wybierz przedmiot",
+                    text = currentGroup?.subject?.name ?: strings.selectSubject,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -152,7 +154,7 @@ fun SimulatorScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Aktualna średnia", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(strings.currentAvg, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = currentAvg?.let { "$it" } ?: "-",
                             fontSize = 24.sp,
@@ -163,7 +165,7 @@ fun SimulatorScreen(
                     Text("➔", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Przewidywana średnia", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(strings.projectedAvg, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = simulatedAvg?.let { "$it" } ?: "-",
                             fontSize = 24.sp,
@@ -179,7 +181,7 @@ fun SimulatorScreen(
 
         // Add Simulated Grade Section
         Text(
-            text = "Symulacja nowej oceny:",
+            text = strings.simNewGradeHeader,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -193,7 +195,7 @@ fun SimulatorScreen(
             OutlinedTextField(
                 value = inputGradeText,
                 onValueChange = { inputGradeText = it },
-                label = { Text("Ocena (1-6)") },
+                label = { Text(strings.gradeOneToSix) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(10.dp)
@@ -202,7 +204,7 @@ fun SimulatorScreen(
             OutlinedTextField(
                 value = inputWeightText,
                 onValueChange = { inputWeightText = it },
-                label = { Text("Waga") },
+                label = { Text(strings.weight) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(10.dp)
@@ -219,7 +221,7 @@ fun SimulatorScreen(
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.height(54.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Dodaj")
+                Icon(Icons.Default.Add, contentDescription = strings.addSimulated)
             }
         }
 
@@ -231,9 +233,9 @@ fun SimulatorScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Dodane oceny próbne (${simulatedGrades.size}):", fontSize = 12.sp)
+                Text("${strings.addedSimulatedGrades} (${simulatedGrades.size}):", fontSize = 12.sp)
                 TextButton(onClick = { simulatedGrades = emptyList() }) {
-                    Text("Wyczyść", color = MaterialTheme.colorScheme.error)
+                    Text(strings.clear, color = MaterialTheme.colorScheme.error)
                 }
             }
             simulatedGrades.forEachIndexed { idx, pair ->
@@ -249,14 +251,14 @@ fun SimulatorScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Ocena: ${pair.first.toInt()}, waga: ${pair.second.toInt()}", fontWeight = FontWeight.Medium)
+                        Text("${strings.simGradeLabel}${pair.first.toInt()}${strings.simWeightLabel}${pair.second.toInt()}", fontWeight = FontWeight.Medium)
                         IconButton(
                             onClick = {
                                 simulatedGrades = simulatedGrades.toMutableList().also { it.removeAt(idx) }
                             },
                             modifier = Modifier.size(24.dp)
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Usuń", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -265,7 +267,7 @@ fun SimulatorScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // "Co muszę dostać?" Target Calculator Card
+        // Target Goal Calculator Card
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -273,7 +275,7 @@ fun SimulatorScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "🎯 Kalkulator celu: \"Co muszę dostać?\"",
+                    text = strings.targetCalcHeader,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -286,7 +288,7 @@ fun SimulatorScreen(
                     OutlinedTextField(
                         value = targetAverageText,
                         onValueChange = { targetAverageText = it },
-                        label = { Text("Docelowa średnia") },
+                        label = { Text(strings.targetAvgLabel) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp)
@@ -295,7 +297,7 @@ fun SimulatorScreen(
                     OutlinedTextField(
                         value = targetWeightText,
                         onValueChange = { targetWeightText = it },
-                        label = { Text("Waga sprawdzianu") },
+                        label = { Text(strings.examWeightLabel) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp)
@@ -314,11 +316,11 @@ fun SimulatorScreen(
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
                                 text = if (isFeasible) {
-                                    "Musisz otrzymać ocenę minimum: ${requiredGrade}"
+                                    strings.targetSuccess(requiredGrade)
                                 } else if (requiredGrade > 6.0) {
-                                    "Średnia ${targetAverageText} jest nieosiągalna z pojedynczego sprawdzianu (wymagałaby oceny ${requiredGrade})."
+                                    strings.targetImpossible(requiredGrade, targetAverageText)
                                 } else {
-                                    "Już teraz masz średnią powyżej ${targetAverageText}!"
+                                    strings.targetAlreadyAbove(targetAverageText)
                                 },
                                 fontWeight = FontWeight.Bold,
                                 color = if (isFeasible) Color(0xFF2E7D32) else Color(0xFFC62828),

@@ -15,12 +15,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.models.ChildAccount
 import pl.librus.mobile.domain.models.StudentProfile
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 
 @Composable
 fun StudentHeaderCard(
@@ -28,7 +29,8 @@ fun StudentHeaderCard(
     children: List<ChildAccount>,
     activeChild: ChildAccount?,
     onSwitchChild: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    strings: Strings = Strings(AppLanguage.ENGLISH)
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -73,15 +75,15 @@ fun StudentHeaderCard(
 
                     Column {
                         Text(
-                            text = profile?.fullName ?: activeChild?.studentName ?: "Uczeń",
+                            text = profile?.fullName ?: activeChild?.studentName ?: strings.studentDefault,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         if (profile?.className?.isNotEmpty() == true) {
                             Text(
-                                text = "Klasa ${profile.className}" +
-                                    (profile.classRegisterNumber?.let { " • Nr $it" } ?: ""),
+                                text = "${strings.classPrefix}${profile.className}" +
+                                    (profile.classRegisterNumber?.let { " • ${strings.numberShort}$it" } ?: ""),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
@@ -96,8 +98,8 @@ fun StudentHeaderCard(
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Zmień", fontSize = 12.sp)
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Wybierz dziecko")
+                            Text(strings.switchChild, fontSize = 12.sp)
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = strings.switchChild)
                         }
 
                         DropdownMenu(

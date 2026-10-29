@@ -17,12 +17,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.models.LuckyNumber
 import pl.librus.mobile.domain.models.StudentProfile
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 
 @Composable
 fun LuckyNumberCard(
     luckyNumber: LuckyNumber?,
     profile: StudentProfile?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    strings: Strings = Strings(AppLanguage.ENGLISH)
 ) {
     if (luckyNumber == null) return
 
@@ -75,16 +78,16 @@ fun LuckyNumberCard(
 
                 Column {
                     Text(
-                        text = if (isLucky) "🎉 Masz szczęśliwy numerek!" else "Szczęśliwy numerek",
+                        text = if (isLucky) strings.luckyNumberWon else strings.luckyNumber,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = contentColor
                     )
                     Text(
                         text = if (isLucky) {
-                            "Jesteś dzisiaj zwolniony z odpowiedzi ustnej!"
+                            strings.luckyNumberWonDesc
                         } else {
-                            "Twój numer w dzienniku: ${profile?.classRegisterNumber ?: "-"}"
+                            "${strings.yourRegisterNo}${profile?.classRegisterNumber ?: "-"}"
                         },
                         fontSize = 12.sp,
                         color = contentColor.copy(alpha = 0.85f)

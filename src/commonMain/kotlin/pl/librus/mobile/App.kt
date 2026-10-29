@@ -20,20 +20,28 @@ import pl.librus.mobile.domain.models.Grade
 import pl.librus.mobile.network.LibrusCookieStorage
 import pl.librus.mobile.network.LibrusHttpClientFactory
 import pl.librus.mobile.network.LibrusLiveApiClient
+import pl.librus.mobile.ui.AppLanguage
+import pl.librus.mobile.ui.Strings
 import pl.librus.mobile.ui.components.GradeDetailDialog
 import pl.librus.mobile.ui.screens.*
 import pl.librus.mobile.ui.theme.AppThemeMode
 import pl.librus.mobile.ui.theme.LibrusTheme
 
-enum class NavigationItem(val title: String, val icon: ImageVector) {
-    HOME("Pulpit", Icons.Default.Home),
-    GRADES("Oceny", Icons.Default.FormatListNumbered),
-    TIMETABLE("Plan", Icons.Default.CalendarToday),
-    ATTENDANCE("Frekwencja", Icons.Default.CheckCircle),
-    SIMULATOR("Kalkulator", Icons.Default.Calculate),
-    NOTICES("Ogłoszenia", Icons.Default.Campaign),
-    SETTINGS("Ustawienia", Icons.Default.Settings)
+enum class ScreenKey {
+    HOME,
+    GRADES,
+    TIMETABLE,
+    ATTENDANCE,
+    SIMULATOR,
+    NOTICES,
+    SETTINGS
 }
+
+data class NavItem(
+    val key: ScreenKey,
+    val title: (Strings) -> String,
+    val icon: ImageVector
+)
 
 @Composable
 fun App(
@@ -48,7 +56,16 @@ fun App(
     val portalAuthClient = remember(httpClient) { PortalAuthClient(httpClient) }
     val gatewayAuthClient = remember(httpClient) { GatewayAuthClient(httpClient) }
 
-    var currentScreen by remember { mutableStateOf(NavigationItem.HOME) }
+    var currentScreen by remember { mutableStateOf(ScreenKey.HOME) }
+    var language by remember {
+        mutableStateOf(
+            storage.getString("saved_language")?.let {
+                runCatching { AppLanguage.valueOf(it) }.getOrNull()
+            } ?: AppLanguage.ENGLISH
+        )
+    }
+    val strings = remember(language) { Strings(language) }
+
     var themeMode by remember {
         mutableStateOf(
             storage.getString("saved_theme")?.let {
@@ -85,6 +102,7 @@ fun App(
             is AuthState.Unauthenticated, is AuthState.Authenticating, is AuthState.Error -> {
                 LoginScreen(
                     authState = state,
+                    strings = strings,
                     onLoginPortal = { email, pass ->
                         coroutineScope.launch {
                             authManager.loginPortal(email, pass, portalAuthClient)
@@ -125,27 +143,27 @@ fun App(
                             tonalElevation = 6.dp
                         ) {
                             val items = listOf(
-                                NavigationItem.HOME,
-                                NavigationItem.GRADES,
-                                NavigationItem.TIMETABLE,
-                                NavigationItem.ATTENDANCE,
-                                NavigationItem.SIMULATOR,
-                                NavigationItem.SETTINGS
+                                NavItem(ScreenKey.HOME, { it.navHome }, Icons.Default.Home),
+                                NavItem(ScreenKey.GRADES, { it.navGrades }, Icons.Default.FormatListNumbered),
+                                NavItem(ScreenKey.TIMETABLE, { it.navTimetable }, Icons.Default.CalendarToday),
+                                NavItem(ScreenKey.ATTENDANCE, { it.navAttendance }, Icons.Default.CheckCircle),
+                                NavItem(ScreenKey.SIMULATOR, { it.navSimulator }, Icons.Default.Calculate),
+                                NavItem(ScreenKey.SETTINGS, { it.navSettings }, Icons.Default.Settings)
                             )
                             items.forEach { item ->
-                                val isSelected = currentScreen == item
+                                val isSelected = currentScreen == item.key
                                 NavigationBarItem(
                                     selected = isSelected,
-                                    onClick = { currentScreen = item },
+                                    onClick = { currentScreen = item.key },
                                     icon = {
                                         Icon(
                                             imageVector = item.icon,
-                                            contentDescription = item.title,
+                                            contentDescription = item.title(strings),
                                             modifier = Modifier.size(22.dp)
                                         )
                                     },
                                     label = {
-                                        Text(text = item.title, fontSize = 11.sp)
+                                        Text(text = item.title(strings), fontSize = 11.sp)
                                     }
                                 )
                             }
@@ -182,7 +200,7 @@ fun App(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = backgroundSyncMessage ?: "Logowanie i aktualizacja...",
+                                        text = backgroundSyncMessage ?: strings.syncInProgress,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -197,7 +215,7 @@ fun App(
                                 .weight(1f)
                         ) {
                             when (currentScreen) {
-                                NavigationItem.HOME -> {
+                                ScreenKey.HOME -> {
                                     HomeScreen(
                                         profile = profile,
                                         children = state.session.children,
@@ -208,6 +226,7 @@ fun App(
                                         timetable = timetable,
                                         attendanceStats = attendanceStats,
                                         notices = notices,
+                                        strings = strings,
                                         onSwitchChild = { childId ->
                                             authManager.switchChild(childId)
                                             coroutineScope.launch {
@@ -216,46 +235,61 @@ fun App(
                                                 }
                                             }
                                         },
-                                        onNavigateToGrades = { currentScreen = NavigationItem.GRADES },
-                                        onNavigateToTimetable = { currentScreen = NavigationItem.TIMETABLE },
-                                        onNavigateToAttendance = { currentScreen = NavigationItem.ATTENDANCE },
-                                        onNavigateToNotices = { currentScreen = NavigationItem.NOTICES },
+                                        onNavigateToGrades = { currentScreen = ScreenKey.GRADES },
+                                        onNavigateToTimetable = { currentScreen = ScreenKey.TIMETABLE },
+                                        onNavigateToAttendance = { currentScreen = ScreenKey.ATTENDANCE },
+                                        onNavigateToNotices = { currentScreen = ScreenKey.NOTICES },
                                         onGradeClick = { grade -> selectedGradeForDialog = grade }
                                     )
                                 }
-                                NavigationItem.GRADES -> {
+                                ScreenKey.GRADES -> {
                                     GradesScreen(
                                         groups = grades,
+                                        strings = strings,
                                         onGradeClick = { grade -> selectedGradeForDialog = grade }
                                     )
                                 }
-                                NavigationItem.TIMETABLE -> {
-                                    TimetableScreen(timetable = timetable)
-                                }
-                                NavigationItem.ATTENDANCE -> {
-                                    AttendanceScreen(
-                                        stats = attendanceStats,
-                                        attendances = attendances
+                                ScreenKey.TIMETABLE -> {
+                                    TimetableScreen(
+                                        timetable = timetable,
+                                        strings = strings
                                     )
                                 }
-                                NavigationItem.SIMULATOR -> {
-                                    SimulatorScreen(groups = grades)
+                                ScreenKey.ATTENDANCE -> {
+                                    AttendanceScreen(
+                                        stats = attendanceStats,
+                                        attendances = attendances,
+                                        strings = strings
+                                    )
                                 }
-                                NavigationItem.NOTICES -> {
+                                ScreenKey.SIMULATOR -> {
+                                    SimulatorScreen(
+                                        groups = grades,
+                                        strings = strings
+                                    )
+                                }
+                                ScreenKey.NOTICES -> {
                                     NoticesScreen(
                                         notices = notices,
+                                        strings = strings,
                                         onMarkAsRead = { noticeId ->
                                             repository.markNoticeAsRead(noticeId)
                                         }
                                     )
                                 }
-                                NavigationItem.SETTINGS -> {
+                                ScreenKey.SETTINGS -> {
                                     SettingsScreen(
                                         session = state.session,
                                         themeMode = themeMode,
+                                        language = language,
+                                        strings = strings,
                                         onThemeChange = {
                                             themeMode = it
                                             storage.putString("saved_theme", it.name)
+                                        },
+                                        onLanguageChange = {
+                                            language = it
+                                            storage.putString("saved_language", it.name)
                                         },
                                         onLogout = {
                                             coroutineScope.launch {
@@ -271,6 +305,7 @@ fun App(
                             selectedGradeForDialog?.let { grade ->
                                 GradeDetailDialog(
                                     grade = grade,
+                                    strings = strings,
                                     onDismiss = { selectedGradeForDialog = null }
                                 )
                             }
