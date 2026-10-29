@@ -2,6 +2,7 @@ package pl.librus.mobile.domain.calculations
 
 import pl.librus.mobile.domain.models.Attendance
 import pl.librus.mobile.domain.models.AttendanceStats
+import pl.librus.mobile.domain.models.AttendanceKind
 import kotlin.math.roundToInt
 
 object AttendanceCalculator {
@@ -16,12 +17,12 @@ object AttendanceCalculator {
         var exempt = 0
 
         for (a in attendances) {
-            when (a.type.id) {
-                "1" -> present++
-                "2" -> unexcused++
-                "3" -> excused++
-                "4" -> late++
-                "5" -> exempt++
+            when (a.type.kind) {
+                AttendanceKind.PRESENT -> present++
+                AttendanceKind.UNEXCUSED -> unexcused++
+                AttendanceKind.EXCUSED -> excused++
+                AttendanceKind.LATE -> late++
+                AttendanceKind.EXEMPT -> exempt++
                 else -> {
                     if (a.type.isPresence) present++
                     else if (a.type.isAbsence) unexcused++

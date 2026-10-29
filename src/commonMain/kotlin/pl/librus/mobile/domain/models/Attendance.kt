@@ -3,20 +3,24 @@ package pl.librus.mobile.domain.models
 import kotlinx.serialization.Serializable
 
 @Serializable
+enum class AttendanceKind { PRESENT, UNEXCUSED, EXCUSED, LATE, EXEMPT, UNKNOWN }
+
+@Serializable
 data class AttendanceType(
     val id: String,
     val name: String,
     val shortName: String,
     val isPresence: Boolean,
     val isAbsence: Boolean,
-    val colorHex: String = "#4CAF50"
+    val colorHex: String = "#4CAF50",
+    val kind: AttendanceKind = AttendanceKind.UNKNOWN
 ) {
     companion object {
-        val PRESENCE = AttendanceType("1", "Obecność", "ob", isPresence = true, isAbsence = false, colorHex = "#4CAF50")
-        val UNEXCUSED = AttendanceType("2", "Nieobecność nieusprawiedliwiona", "nb", isPresence = false, isAbsence = true, colorHex = "#E53935")
-        val EXCUSED = AttendanceType("3", "Nieobecność usprawiedliwiona", "u", isPresence = false, isAbsence = true, colorHex = "#1E88E5")
-        val LATE = AttendanceType("4", "Spóźnienie", "sp", isPresence = true, isAbsence = false, colorHex = "#FB8C00")
-        val EXEMPT = AttendanceType("5", "Zwolnienie", "zw", isPresence = false, isAbsence = false, colorHex = "#757575")
+        val PRESENCE = AttendanceType("1", "Obecność", "ob", true, false, "#4CAF50", AttendanceKind.PRESENT)
+        val UNEXCUSED = AttendanceType("2", "Nieobecność nieusprawiedliwiona", "nb", false, true, "#E53935", AttendanceKind.UNEXCUSED)
+        val EXCUSED = AttendanceType("3", "Nieobecność usprawiedliwiona", "u", false, true, "#1E88E5", AttendanceKind.EXCUSED)
+        val LATE = AttendanceType("4", "Spóźnienie", "sp", true, false, "#FB8C00", AttendanceKind.LATE)
+        val EXEMPT = AttendanceType("5", "Zwolnienie", "zw", false, false, "#757575", AttendanceKind.EXEMPT)
     }
 }
 

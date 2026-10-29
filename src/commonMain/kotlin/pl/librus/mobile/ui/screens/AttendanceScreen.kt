@@ -13,6 +13,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import pl.librus.mobile.domain.models.Attendance
 import pl.librus.mobile.domain.models.AttendanceStats
 import pl.librus.mobile.ui.AppLanguage
@@ -23,7 +26,10 @@ import pl.librus.mobile.ui.components.parseColorHex
 fun AttendanceScreen(
     stats: AttendanceStats,
     attendances: List<Attendance>,
-    strings: Strings = Strings(AppLanguage.ENGLISH)
+    strings: Strings = Strings(AppLanguage.ENGLISH),
+    isLoading: Boolean = false,
+    syncFailed: Boolean = false,
+    onRetry: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -31,6 +37,19 @@ fun AttendanceScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
+        if (isLoading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            Text(strings.attendanceLoading, modifier = Modifier.padding(vertical = 8.dp))
+        } else if (syncFailed) {
+            Text(
+                strings.attendanceUnavailable,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            )
+            TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(strings.retryTimetable)
+            }
+        }
         // Stats Overview Card
         Card(
             shape = RoundedCornerShape(20.dp),
@@ -58,7 +77,7 @@ fun AttendanceScreen(
                     }
 
                     Text(
-                        text = "${stats.presencePercentage}%",
+                        text = if (stats.totalHours == 0) "—" else "${stats.presencePercentage}%",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary
@@ -96,7 +115,9 @@ fun AttendanceScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(strings.noAttendanceRecords, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (!isLoading && !syncFailed) {
+                    Text(strings.noAttendanceRecords, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         } else {
             LazyColumn(

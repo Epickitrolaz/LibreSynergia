@@ -13,7 +13,10 @@ data class CachedAppState(
     val categories: List<GradeCategory> = emptyList(),
     val rawGrades: List<Grade> = emptyList(),
     val timetable: List<TimetableDay> = emptyList(),
+    // Missing on legacy caches, whose timetable contained hardcoded demo data.
+    val timetableOwner: String? = null,
     val attendances: List<Attendance> = emptyList(),
+    val attendanceOwner: String? = null,
     val attendanceStats: AttendanceStats = AttendanceStats(),
     val notices: List<SchoolNotice> = emptyList()
 )

@@ -5,6 +5,8 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CancellationException
+import kotlinx.datetime.*
 import kotlinx.serialization.json.*
 import pl.librus.mobile.auth.AuthBackendType
 import pl.librus.mobile.auth.UserSession
@@ -42,10 +44,69 @@ class LibrusLiveApiClient(
             } else {
                 null
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             null
         }
     }
+
+    /** Null means a failed sync; an empty week is a successful, authoritative response. */
+    suspend fun fetchTimetable(
+        session: UserSession,
+        today: LocalDate = Clock.System.todayIn(TimeZone.of("Europe/Warsaw"))
+    ): List<TimetableDay>? {
+        val monday = today.minus(today.dayOfWeek.isoDayNumber - 1, DateTimeUnit.DAY)
+        val root = fetchJson(session, "Timetables?weekStart=$monday") as? JsonObject ?: return null
+        // Sequential requests keep concurrency below the per-host limit.
+        val subjects = fetchSubjects(session).associate { it.id to it.name }
+        val teachers = fetchNames(session, "Users") { user ->
+            listOfNotNull(user.text("FirstName"), user.text("LastName")).joinToString(" ")
+        }
+        val classrooms = fetchNames(session, "Classrooms") { it.text("Name").orEmpty() }
+        return try {
+            TimetableParser.parse(root, monday, subjects, teachers, classrooms)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+
+    /** Null denotes a failed/incomplete sync, not an empty attendance register. */
+    suspend fun fetchAttendances(session: UserSession): List<Attendance>? {
+        val root = fetchJson(session, "Attendances") as? JsonObject ?: return null
+        val entries = root["Attendances"] as? JsonArray ?: return null
+        if (entries.isEmpty()) return emptyList()
+        return try {
+            val nativeTypes = fetchJson(session, "Attendances/Types") as? JsonObject
+            val types = nativeTypes?.let { AttendanceParser.types(it) }
+                ?: (fetchJson(session, "AttendanceTypes") as? JsonObject)?.let { AttendanceParser.types(it) }
+                ?: return null
+            val subjects = fetchNames(session, "Subjects") { it.text("Name").orEmpty() }
+            val lessons = fetchNames(session, "Lessons") {
+                (it["Subject"] as? JsonObject)?.text("Id").orEmpty()
+            }
+            AttendanceParser.parse(entries, types, subjects, lessons)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private suspend fun fetchNames(
+        session: UserSession,
+        endpoint: String,
+        name: (JsonObject) -> String
+    ): Map<String, String> {
+        val root = fetchJson(session, endpoint) as? JsonObject ?: return emptyMap()
+        return (root[endpoint] as? JsonArray).orEmpty().mapNotNull { element ->
+            val item = element as? JsonObject ?: return@mapNotNull null
+            val id = item.text("Id") ?: return@mapNotNull null
+            id to name(item)
+        }.toMap()
+    }
+
+    private fun JsonObject.text(key: String): String? = (get(key) as? JsonPrimitive)?.contentOrNull
 
     suspend fun fetchMe(session: UserSession): StudentProfile? {
         val root = fetchJson(session, "Me")?.jsonObject ?: return null
