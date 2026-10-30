@@ -48,9 +48,7 @@ fun MessagesScreen(
     val unreadCount = remember(messages) { messages.count { !it.isRead } }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
+        modifier = Modifier.fillMaxSize()
     ) {
         // Top Header
         Surface(

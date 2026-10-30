@@ -286,6 +286,7 @@ fun App(
             }
             is AuthState.Authenticated -> {
                 Scaffold(
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     bottomBar = {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
@@ -367,7 +368,8 @@ fun App(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(innerPadding)
+                            .statusBarsPadding()
+                            .padding(bottom = innerPadding.calculateBottomPadding())
                     ) {
                         // Background sync indicator banner
                         AnimatedVisibility(
@@ -446,9 +448,7 @@ fun App(
                                 }
                                 ScreenKey.GRADES -> {
                                     Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .statusBarsPadding()
+                                        modifier = Modifier.fillMaxSize()
                                     ) {
                                         TabRow(
                                             selectedTabIndex = gradesSubTab,
@@ -499,9 +499,7 @@ fun App(
                                 }
                                 ScreenKey.SCHEDULE -> {
                                     Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .statusBarsPadding()
+                                        modifier = Modifier.fillMaxSize()
                                     ) {
                                         TabRow(
                                             selectedTabIndex = scheduleSubTab,

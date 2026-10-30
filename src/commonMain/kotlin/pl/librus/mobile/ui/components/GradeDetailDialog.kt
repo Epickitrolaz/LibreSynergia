@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,10 +31,8 @@ fun GradeDetailDialog(
     onDismiss: () -> Unit,
     strings: Strings = Strings(AppLanguage.ENGLISH)
 ) {
-    val gradeColor = try {
-        Color(parseColorHex(grade.colorHex))
-    } catch (e: Exception) {
-        MaterialTheme.colorScheme.primary
+    val gradeColor = remember(grade.grade, grade.colorHex) {
+        getGradeColor(grade.grade, grade.colorHex)
     }
 
     Dialog(onDismissRequest = onDismiss) {

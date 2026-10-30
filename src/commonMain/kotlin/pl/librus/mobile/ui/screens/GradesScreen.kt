@@ -20,6 +20,7 @@ import pl.librus.mobile.domain.models.SubjectGradeGroup
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
 import pl.librus.mobile.ui.components.GradeBadge
+import pl.librus.mobile.ui.components.getGradeColor
 import pl.librus.mobile.ui.components.GradeDetailDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -196,10 +197,16 @@ fun GradesScreen(
                                             modifier = Modifier.weight(1f)
                                         )
 
+                                        val avgColor = if (subjectAvg != null) {
+                                            getGradeColor(subjectAvg.toString())
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        }
+
                                         Surface(
                                             shape = RoundedCornerShape(8.dp),
-                                            color = if (subjectAvg != null && subjectAvg >= 4.5) {
-                                                Color(0xFFE8F5E9)
+                                            color = if (subjectAvg != null) {
+                                                avgColor.copy(alpha = 0.15f)
                                             } else {
                                                 MaterialTheme.colorScheme.surfaceVariant
                                             }
@@ -208,11 +215,7 @@ fun GradesScreen(
                                                 text = subjectAvg?.let { "${strings.avgPrefix}$it" } ?: strings.noGrades,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 12.sp,
-                                                color = if (subjectAvg != null && subjectAvg >= 4.5) {
-                                                    Color(0xFF2E7D32)
-                                                } else {
-                                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                                },
+                                                color = avgColor,
                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                             )
                                         }

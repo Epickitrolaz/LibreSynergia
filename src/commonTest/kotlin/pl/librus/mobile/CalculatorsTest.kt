@@ -27,6 +27,49 @@ class CalculatorsTest {
     }
 
     @Test
+    fun testGradeColorCodingRanges() {
+        // 6 (Celujący) -> Blue
+        assertEquals("#1E88E5", Grade.getGradeColorHex("6"))
+        assertEquals("#1E88E5", Grade.getGradeColorHex("6-"))
+        assertEquals("#1E88E5", Grade.getGradeColorHex("5.75"))
+
+        // 5 (Bardzo dobry) -> Green
+        assertEquals("#2E7D32", Grade.getGradeColorHex("5"))
+        assertEquals("#2E7D32", Grade.getGradeColorHex("5+"))
+        assertEquals("#2E7D32", Grade.getGradeColorHex("5-"))
+        assertEquals("#2E7D32", Grade.getGradeColorHex("4.80"))
+
+        // 4 (Dobry) -> Light Green
+        assertEquals("#689F38", Grade.getGradeColorHex("4"))
+        assertEquals("#689F38", Grade.getGradeColorHex("4+"))
+        assertEquals("#689F38", Grade.getGradeColorHex("4-"))
+        assertEquals("#689F38", Grade.getGradeColorHex("3.85"))
+
+        // 3 (Dostateczny) -> Yellow
+        assertEquals("#F57F17", Grade.getGradeColorHex("3"))
+        assertEquals("#F57F17", Grade.getGradeColorHex("3+"))
+        assertEquals("#F57F17", Grade.getGradeColorHex("3-"))
+        assertEquals("#F57F17", Grade.getGradeColorHex("2.90"))
+
+        // 2 (Dopuszczający) -> Orange
+        assertEquals("#FB8C00", Grade.getGradeColorHex("2"))
+        assertEquals("#FB8C00", Grade.getGradeColorHex("2+"))
+        assertEquals("#FB8C00", Grade.getGradeColorHex("2-"))
+        assertEquals("#FB8C00", Grade.getGradeColorHex("1.80"))
+
+        // 1 (Niedostateczny) -> Red
+        assertEquals("#D32F2F", Grade.getGradeColorHex("1"))
+        assertEquals("#D32F2F", Grade.getGradeColorHex("1+"))
+        assertEquals("#D32F2F", Grade.getGradeColorHex("1.20"))
+
+        // Special symbols
+        assertEquals("#2E7D32", Grade.getGradeColorHex("+"))
+        assertEquals("#D32F2F", Grade.getGradeColorHex("-"))
+        assertEquals("#757575", Grade.getGradeColorHex("np"))
+        assertEquals("#757575", Grade.getGradeColorHex("bz"))
+    }
+
+    @Test
     fun testWeightedAverageCalculation() {
         val mathSubject = Subject(id = "1", name = "Matematyka")
         val grades = listOf(

@@ -52,7 +52,49 @@ data class Grade(
     val numericValue: Double?
         get() = parseGradeValue(grade)
 
+    val effectiveColorHex: String
+        get() = getGradeColorHex(grade, colorHex)
+
     companion object {
+        fun getGradeColorHex(rawGrade: String, fallbackHex: String = "#7E57C2"): String {
+            val trimmed = rawGrade.trim()
+            if (trimmed.isEmpty()) return fallbackHex
+
+            // If it's a standard school grade with optional plus/minus (e.g. "6", "5+", "4-")
+            if (trimmed.matches(Regex("""^[+-]?[1-6][+-]?$"""))) {
+                val digit = trimmed.firstOrNull { it.isDigit() }
+                return when (digit) {
+                    '6' -> "#1E88E5" // Blue (6)
+                    '5' -> "#2E7D32" // Green (5)
+                    '4' -> "#689F38" // Light Green (4)
+                    '3' -> "#F57F17" // Yellow (3)
+                    '2' -> "#FB8C00" // Orange (2)
+                    '1' -> "#D32F2F" // Red (1)
+                    else -> fallbackHex
+                }
+            }
+
+            // Decimal numbers (e.g. calculated averages like 4.75, 3.25)
+            val numeric = parseGradeValue(trimmed)
+            if (numeric != null) {
+                return when {
+                    numeric >= 5.5 -> "#1E88E5" // Blue (6)
+                    numeric >= 4.5 -> "#2E7D32" // Green (5)
+                    numeric >= 3.5 -> "#689F38" // Light Green (4)
+                    numeric >= 2.5 -> "#F57F17" // Yellow (3)
+                    numeric >= 1.5 -> "#FB8C00" // Orange (2)
+                    else -> "#D32F2F"           // Red (1)
+                }
+            }
+
+            return when {
+                trimmed == "+" -> "#2E7D32"
+                trimmed == "-" -> "#D32F2F"
+                trimmed.equals("np", ignoreCase = true) || trimmed.equals("bz", ignoreCase = true) -> "#757575"
+                else -> fallbackHex
+            }
+        }
+
         fun parseGradeValue(raw: String): Double? {
             val trimmed = raw.trim()
             if (trimmed.isEmpty()) return null

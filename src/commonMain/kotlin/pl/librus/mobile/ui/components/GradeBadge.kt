@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,22 +17,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.models.Grade
 
+fun getGradeColor(gradeStr: String, fallbackColorHex: String = "#7E57C2"): Color {
+    val hex = Grade.getGradeColorHex(gradeStr, fallbackColorHex)
+    return try {
+        Color(parseColorHex(hex))
+    } catch (_: Exception) {
+        Color(0xFF7E57C2)
+    }
+}
+
 @Composable
 fun GradeBadge(
     grade: Grade,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = try {
-        Color(parseColorHex(grade.colorHex))
-    } catch (e: Exception) {
-        MaterialTheme.colorScheme.primary
+    val badgeColor = remember(grade.grade, grade.colorHex) {
+        getGradeColor(grade.grade, grade.colorHex)
     }
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(bgColor.copy(alpha = 0.15f))
+            .background(badgeColor.copy(alpha = 0.15f))
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 5.dp),
         contentAlignment = Alignment.Center
@@ -41,14 +49,14 @@ fun GradeBadge(
         ) {
             Text(
                 text = grade.grade,
-                color = bgColor,
+                color = badgeColor,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp
             )
             if (grade.weight > 0) {
                 Text(
                     text = "w:${grade.weight.toInt()}",
-                    color = bgColor.copy(alpha = 0.8f),
+                    color = badgeColor.copy(alpha = 0.8f),
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Medium
                 )

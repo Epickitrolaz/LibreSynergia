@@ -53,9 +53,7 @@ fun HomeworkScreen(
     val completedCount = remember(homeworks) { homeworks.count { it.isDone } }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
+        modifier = Modifier.fillMaxSize()
     ) {
         // Top Header
         Surface(
