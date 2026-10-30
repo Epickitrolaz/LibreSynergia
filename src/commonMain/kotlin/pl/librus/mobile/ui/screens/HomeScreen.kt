@@ -53,7 +53,12 @@ fun HomeScreen(
     val todaySchedule = remember(timetable, today) {
         timetable.find { it.date == today.toString() }
     }
-    val unreadNotices = remember(notices) { notices.filter { !it.isRead } }
+    val unreadNotices = remember(notices) {
+        notices.filter { !it.isRead }.sortedWith(
+            compareByDescending<SchoolNotice> { it.date }
+                .thenByDescending { it.id }
+        )
+    }
 
     // Reverse / sort grades so newest/latest grades appear first
     val previewGrades = remember(recentGrades) {

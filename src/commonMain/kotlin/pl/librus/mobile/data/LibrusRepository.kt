@@ -176,11 +176,16 @@ class LibrusRepository(
             val readIds = getReadNoticeIds()
             val liveNotices = liveApiClient?.fetchSchoolNotices(session)
             if (liveNotices != null) {
-                _notices.value = liveNotices.map {
+                val sorted = liveNotices.sortedWith(
+                    compareByDescending<SchoolNotice> { it.date }.thenByDescending { it.id }
+                )
+                _notices.value = sorted.map {
                     if (it.id in readIds) it.copy(isRead = true) else it
                 }
             } else {
-                _notices.value = _notices.value.map {
+                _notices.value = _notices.value.sortedWith(
+                    compareByDescending<SchoolNotice> { it.date }.thenByDescending { it.id }
+                ).map {
                     if (it.id in readIds) it.copy(isRead = true) else it
                 }
             }
