@@ -49,7 +49,7 @@ jobs:
 
   build-ios:
     name: Build iOS IPA
-    runs-on: macos-14
+    runs-on: macos-15
     env:
       GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6144m -XX:+UseG1GC -XX:SoftRefLRUPolicyMSPerMB=1 -Dfile.encoding=UTF-8"
     steps:
