@@ -75,4 +75,72 @@ class CalculatorsTest {
         assertEquals(1, stats.excusedCount)
         assertEquals(60.0, stats.presencePercentage)
     }
+
+    @Test
+    fun testLessonStatusCalculator() {
+        val slots = listOf(
+            pl.librus.mobile.domain.models.TimetableSlot(
+                id = "s1",
+                lessonNo = 1,
+                date = "2026-10-30",
+                subjectName = "Matematyka",
+                classroom = "23",
+                hourFrom = "08:00",
+                hourTo = "08:45"
+            ),
+            pl.librus.mobile.domain.models.TimetableSlot(
+                id = "s2",
+                lessonNo = 2,
+                date = "2026-10-30",
+                subjectName = "Język polski",
+                classroom = "104",
+                hourFrom = "08:55",
+                hourTo = "09:40",
+                isCancelled = true
+            ),
+            pl.librus.mobile.domain.models.TimetableSlot(
+                id = "s3",
+                lessonNo = 3,
+                date = "2026-10-30",
+                subjectName = "Historia",
+                classroom = "12",
+                hourFrom = "09:50",
+                hourTo = "10:35"
+            )
+        )
+
+        // 07:30 -> BeforeSchool
+        val before = pl.librus.mobile.domain.calculations.LessonStatusCalculator.calculateStatus(
+            slots,
+            kotlinx.datetime.LocalTime(7, 30)
+        )
+        kotlin.test.assertTrue(before is pl.librus.mobile.domain.calculations.LessonStatus.BeforeSchool)
+        assertEquals(30, before.minutesToStart)
+
+        // 08:20 -> LessonOngoing (Math)
+        val during = pl.librus.mobile.domain.calculations.LessonStatusCalculator.calculateStatus(
+            slots,
+            kotlinx.datetime.LocalTime(8, 20)
+        )
+        kotlin.test.assertTrue(during is pl.librus.mobile.domain.calculations.LessonStatus.LessonOngoing)
+        assertEquals("Matematyka", during.lesson.subjectName)
+        assertEquals(25, during.minutesToEnd)
+
+        // 08:50 -> BreakOngoing (Between s1 and s2, s2 is cancelled, next effective is s3)
+        val breakStatus = pl.librus.mobile.domain.calculations.LessonStatusCalculator.calculateStatus(
+            slots,
+            kotlinx.datetime.LocalTime(8, 50)
+        )
+        kotlin.test.assertTrue(breakStatus is pl.librus.mobile.domain.calculations.LessonStatus.BreakOngoing)
+        assertEquals(5, breakStatus.minutesToNextLesson)
+        kotlin.test.assertTrue(breakStatus.isNextCancelled)
+        assertEquals("Historia", breakStatus.nextEffectiveLesson?.subjectName)
+
+        // 11:00 -> SchoolFinished
+        val finished = pl.librus.mobile.domain.calculations.LessonStatusCalculator.calculateStatus(
+            slots,
+            kotlinx.datetime.LocalTime(11, 0)
+        )
+        kotlin.test.assertTrue(finished is pl.librus.mobile.domain.calculations.LessonStatus.SchoolFinished)
+    }
 }

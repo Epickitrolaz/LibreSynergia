@@ -1,7 +1,9 @@
 package pl.librus.mobile
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -24,8 +26,12 @@ import pl.librus.mobile.domain.models.Grade
 import pl.librus.mobile.network.LibrusCookieStorage
 import pl.librus.mobile.network.LibrusHttpClientFactory
 import pl.librus.mobile.network.LibrusLiveApiClient
+import pl.librus.mobile.platform.PlatformBackHandler
+import pl.librus.mobile.platform.exitPlatformApp
+import pl.librus.mobile.platform.showPlatformToast
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.components.AccountSwitcherDialog
 import pl.librus.mobile.ui.components.GradeDetailDialog
 import pl.librus.mobile.ui.icons.AppIcon
 import pl.librus.mobile.ui.icons.AppIconManager
@@ -66,6 +72,11 @@ fun App(
     var gradesSubTab by remember { mutableStateOf(0) }
     var scheduleSubTab by remember { mutableStateOf(0) }
     var currentAppIcon by remember { mutableStateOf(iconManager.getCurrentIcon()) }
+    var showAccountSwitcherDialog by remember { mutableStateOf(false) }
+    var isAddingAccount by remember { mutableStateOf(false) }
+    var isManualRefreshing by remember { mutableStateOf(false) }
+    var lastBackPressTime by remember { mutableStateOf(0L) }
+
     var language by remember {
         mutableStateOf(
             storage.getString("saved_language")?.let {
@@ -87,6 +98,7 @@ fun App(
     val authState by authManager.state.collectAsState()
     val isBackgroundSyncing by authManager.isBackgroundSyncing.collectAsState()
     val backgroundSyncMessage by authManager.backgroundSyncMessage.collectAsState()
+    val savedAccounts by authManager.savedAccounts.collectAsState()
 
     // Trigger non-blocking background login and sync when app starts with stored credentials
     LaunchedEffect(Unit) {
@@ -109,7 +121,123 @@ fun App(
     val notices by repository.notices.collectAsState()
     val luckyNumber by repository.luckyNumber.collectAsState()
 
+    val unreadNoticesCount = remember(notices) { notices.count { !it.isRead } }
+
+    fun triggerRefresh() {
+        coroutineScope.launch {
+            isManualRefreshing = true
+            try {
+                authManager.performBackgroundSync(portalAuthClient, gatewayAuthClient) { refreshedSession ->
+                    repository.loadDataForSession(refreshedSession)
+                }
+                (authManager.state.value as? AuthState.Authenticated)?.let {
+                    repository.loadDataForSession(it.session)
+                }
+            } finally {
+                isManualRefreshing = false
+            }
+        }
+    }
+
+    // Platform Back Navigation Handler (Issue 4)
+    PlatformBackHandler(enabled = true) {
+        if (selectedGradeForDialog != null) {
+            selectedGradeForDialog = null
+        } else if (showAccountSwitcherDialog) {
+            showAccountSwitcherDialog = false
+        } else if (isAddingAccount) {
+            isAddingAccount = false
+        } else if (currentScreen == ScreenKey.NOTICES) {
+            currentScreen = ScreenKey.HOME
+        } else if (currentScreen == ScreenKey.GRADES && gradesSubTab != 0) {
+            gradesSubTab = 0
+        } else if (currentScreen == ScreenKey.SCHEDULE && scheduleSubTab != 0) {
+            scheduleSubTab = 0
+        } else if (currentScreen != ScreenKey.HOME) {
+            currentScreen = ScreenKey.HOME
+        } else {
+            // At root of the navigation tree (Dashboard)
+            val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            if (now - lastBackPressTime < 2000L) {
+                exitPlatformApp()
+            } else {
+                lastBackPressTime = now
+                showPlatformToast(strings.backPressAgainToExit)
+            }
+        }
+    }
+
     LibrusTheme(themeMode = themeMode) {
+        if (isAddingAccount) {
+            // Add Account Screen Mode
+            Scaffold(
+                topBar = {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 2.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        ) {
+                            IconButton(onClick = { isAddingAccount = false }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.close)
+                            }
+                            Text(
+                                text = strings.addAnotherAccount,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            ) { padding ->
+                Box(modifier = Modifier.padding(padding)) {
+                    LoginScreen(
+                        authState = authState,
+                        strings = strings,
+                        onLoginPortal = { email, pass ->
+                            coroutineScope.launch {
+                                authManager.loginPortal(email, pass, portalAuthClient)
+                                val current = authManager.state.value as? AuthState.Authenticated
+                                if (current != null) {
+                                    isAddingAccount = false
+                                    repository.loadDataForSession(current.session)
+                                }
+                            }
+                        },
+                        onLoginGateway = { login, pass ->
+                            coroutineScope.launch {
+                                authManager.loginGateway(login, pass, gatewayAuthClient)
+                                val current = authManager.state.value as? AuthState.Authenticated
+                                if (current != null) {
+                                    isAddingAccount = false
+                                    repository.loadDataForSession(current.session)
+                                }
+                            }
+                        },
+                        onLoginDemo = {
+                            authManager.loginDemo()
+                            val current = authManager.state.value as? AuthState.Authenticated
+                            if (current != null) {
+                                isAddingAccount = false
+                                coroutineScope.launch {
+                                    repository.loadDataForSession(current.session)
+                                }
+                            }
+                        },
+                        onClearError = { authManager.clearError() }
+                    )
+                }
+            }
+            return@LibrusTheme
+        }
+
         when (val state = authState) {
             is AuthState.Unauthenticated, is AuthState.Authenticating, is AuthState.Error -> {
                 LoginScreen(
@@ -149,6 +277,86 @@ fun App(
             }
             is AuthState.Authenticated -> {
                 Scaffold(
+                    topBar = {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 2.dp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .statusBarsPadding()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable {
+                                        showAccountSwitcherDialog = true
+                                    }
+                                ) {
+                                    Text(
+                                        text = "LibreSynergia",
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 18.sp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Icon(
+                                        Icons.Default.ArrowDropDown,
+                                        contentDescription = strings.accountSwitcherTitle,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Notice Board Icon Button with Badge (Issue 7)
+                                    IconButton(
+                                        onClick = { currentScreen = ScreenKey.NOTICES }
+                                    ) {
+                                        BadgedBox(
+                                            badge = {
+                                                if (unreadNoticesCount > 0) {
+                                                    Badge {
+                                                        Text("$unreadNoticesCount")
+                                                    }
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = if (unreadNoticesCount > 0) Icons.Default.NotificationsActive else Icons.Default.Notifications,
+                                                contentDescription = strings.noticeBoardMenu,
+                                                tint = if (unreadNoticesCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    // Manual Refresh Icon Button (Issue 13)
+                                    IconButton(
+                                        onClick = { triggerRefresh() },
+                                        enabled = !isManualRefreshing && !isDataLoading
+                                    ) {
+                                        if (isManualRefreshing || isDataLoading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(18.dp),
+                                                strokeWidth = 2.dp
+                                            )
+                                        } else {
+                                            Icon(
+                                                Icons.Default.Refresh,
+                                                contentDescription = strings.manualRefresh,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     bottomBar = {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
@@ -205,7 +413,7 @@ fun App(
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        // Subtle non-intrusive background sync pill at the top of the content
+                        // Background sync indicator banner
                         AnimatedVisibility(
                             visible = isBackgroundSyncing,
                             enter = fadeIn() + expandVertically(),
@@ -257,14 +465,7 @@ fun App(
                                         attendanceStats = attendanceStats,
                                         notices = notices,
                                         strings = strings,
-                                        onSwitchChild = { childId ->
-                                            authManager.switchChild(childId)
-                                            coroutineScope.launch {
-                                                (authManager.state.value as? AuthState.Authenticated)?.let {
-                                                    repository.loadDataForSession(it.session)
-                                                }
-                                            }
-                                        },
+                                        onOpenAccountSwitcher = { showAccountSwitcherDialog = true },
                                         onNavigateToGrades = {
                                             currentScreen = ScreenKey.GRADES
                                             gradesSubTab = 0
@@ -282,7 +483,9 @@ fun App(
                                             scheduleSubTab = 1
                                         },
                                         onNavigateToNotices = { currentScreen = ScreenKey.NOTICES },
-                                        onGradeClick = { grade -> selectedGradeForDialog = grade }
+                                        onGradeClick = { grade -> selectedGradeForDialog = grade },
+                                        isRefreshing = isManualRefreshing,
+                                        onRefresh = { triggerRefresh() }
                                     )
                                 }
                                 ScreenKey.GRADES -> {
@@ -322,7 +525,9 @@ fun App(
                                                 0 -> GradesScreen(
                                                     groups = grades,
                                                     strings = strings,
-                                                    onGradeClick = { grade -> selectedGradeForDialog = grade }
+                                                    onGradeClick = { grade -> selectedGradeForDialog = grade },
+                                                    isRefreshing = isManualRefreshing,
+                                                    onRefresh = { triggerRefresh() }
                                                 )
                                                 else -> SimulatorScreen(
                                                     groups = grades,
@@ -377,7 +582,9 @@ fun App(
                                                                 repository.loadDataForSession(it.session)
                                                             }
                                                         }
-                                                    }
+                                                    },
+                                                    isRefreshing = isManualRefreshing,
+                                                    onRefresh = { triggerRefresh() }
                                                 )
                                                 else -> AttendanceScreen(
                                                     stats = attendanceStats,
@@ -450,6 +657,8 @@ fun App(
                                             currentAppIcon = it
                                             iconManager.setAppIcon(it)
                                         },
+                                        onOpenAccountSwitcher = { showAccountSwitcherDialog = true },
+                                        onNavigateToNotices = { currentScreen = ScreenKey.NOTICES },
                                         onLogout = {
                                             coroutineScope.launch {
                                                 cookieStorage.clear()
@@ -460,12 +669,44 @@ fun App(
                                 }
                             }
 
-                            // Floating Grade Detail Dialog
+                            // Grade Detail Dialog
                             selectedGradeForDialog?.let { grade ->
                                 GradeDetailDialog(
                                     grade = grade,
                                     strings = strings,
                                     onDismiss = { selectedGradeForDialog = null }
+                                )
+                            }
+
+                            // Multi-Account Switcher Dialog (Issue 11)
+                            if (showAccountSwitcherDialog) {
+                                AccountSwitcherDialog(
+                                    currentSession = state.session,
+                                    savedAccounts = savedAccounts,
+                                    strings = strings,
+                                    onDismiss = { showAccountSwitcherDialog = false },
+                                    onSwitchChild = { childId ->
+                                        authManager.switchChild(childId)
+                                        coroutineScope.launch {
+                                            (authManager.state.value as? AuthState.Authenticated)?.let {
+                                                repository.loadDataForSession(it.session)
+                                            }
+                                        }
+                                    },
+                                    onSwitchAccount = { accountId ->
+                                        authManager.switchSavedAccount(accountId) { newSession ->
+                                            coroutineScope.launch {
+                                                repository.loadDataForSession(newSession)
+                                            }
+                                        }
+                                    },
+                                    onAddAccount = {
+                                        showAccountSwitcherDialog = false
+                                        isAddingAccount = true
+                                    },
+                                    onRemoveAccount = { accountId ->
+                                        authManager.removeAccount(accountId)
+                                    }
                                 )
                             }
                         }

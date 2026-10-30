@@ -168,4 +168,46 @@ class Strings(val lang: AppLanguage) {
     val aboutSection = if (isPl) "O aplikacji" else "About App"
     val appVersion = "Librus Synergia Mobile v1.0.0"
     val logOut = if (isPl) "Wyloguj się" else "Sign Out"
+
+    // Back Exit Toast
+    val backPressAgainToExit = if (isPl) "Naciśnij ponownie, aby wyjść z aplikacji" else "Press back again to exit"
+
+    // Weekdays 2-letter abbreviations
+    val dayPn = if (isPl) "Pn" else "Mo"
+    val dayWt = if (isPl) "Wt" else "Tu"
+    val daySr = if (isPl) "Śr" else "We"
+    val dayCz = if (isPl) "Cz" else "Th"
+    val dayPt = if (isPl) "Pt" else "Fr"
+    val daySo = if (isPl) "So" else "Sa"
+    val dayNd = if (isPl) "Nd" else "Su"
+
+    // Lesson Status
+    val statusLessonOngoing = if (isPl) "Lekcja trwa" else "Lesson in progress"
+    val statusBreakOngoing = if (isPl) "Przerwa" else "Break"
+    val statusBeforeSchool = if (isPl) "Przed lekcjami" else "Before school"
+    val statusSchoolFinished = if (isPl) "Koniec lekcji na dzisiaj! Miłego odpoczynku." else "Lessons finished for today! Enjoy your rest."
+    val statusNoLessonsToday = if (isPl) "Brak lekcji na dzisiaj" else "No lessons today"
+    val statusToEnd = if (isPl) "do końca:" else "remaining:"
+    val statusToStart = if (isPl) "do rozpoczęcia:" else "starts in:"
+    val statusNextLesson = if (isPl) "Następna:" else "Next:"
+    val statusCancelled = if (isPl) "ODWOŁANA" else "CANCELLED"
+    val statusRoom = if (isPl) "sala" else "room"
+    val statusLessonNo = if (isPl) "Lekcja" else "Lesson"
+    val statusNextEffective = if (isPl) "Kolejna odbywająca się:" else "Next scheduled:"
+    val currentTimeLabel = if (isPl) "Teraz" else "Now"
+
+    // Account Switcher
+    val accountSwitcherTitle = if (isPl) "Przełącz konto lub profil" else "Switch Account or Profile"
+    val addAnotherAccount = if (isPl) "Dodaj kolejne konto" else "Add another account"
+    val activeBadge = if (isPl) "Aktywne" else "Active"
+    val linkedChildrenSection = if (isPl) "Profile uczniów (Portal)" else "Linked Student Profiles"
+    val savedAccountsSection = if (isPl) "Zapisane konta" else "Saved Accounts"
+    val switchAccount = if (isPl) "Przełącz konto" else "Switch Account"
+    val removeAccount = if (isPl) "Usuń konto" else "Remove"
+
+    // Notice Board Menu & Access
+    val noticeBoardMenu = if (isPl) "Tablica ogłoszeń" else "Notice Board"
+    val noticeBoardDesc = if (isPl) "Wszystkie komunikaty i ogłoszenia szkolne" else "School announcements & bulletins"
+    val allNoticesRead = if (isPl) "Brak nowych ogłoszeń" else "No unread notices"
+    val manualRefresh = if (isPl) "Odśwież" else "Refresh"
 }

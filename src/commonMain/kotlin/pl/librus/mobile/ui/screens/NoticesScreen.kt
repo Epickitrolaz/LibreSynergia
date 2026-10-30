@@ -26,6 +26,14 @@ fun NoticesScreen(
     strings: Strings = Strings(AppLanguage.ENGLISH),
     onMarkAsRead: (String) -> Unit
 ) {
+    // Show newest / latest notices at the top
+    val sortedNotices = androidx.compose.runtime.remember(notices) {
+        notices.sortedWith(
+            compareByDescending<SchoolNotice> { it.date }
+                .thenByDescending { it.id }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -40,7 +48,7 @@ fun NoticesScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        if (notices.isEmpty()) {
+        if (sortedNotices.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -55,7 +63,7 @@ fun NoticesScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(notices) { notice ->
+                items(sortedNotices, key = { it.id }) { notice ->
                     Card(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
