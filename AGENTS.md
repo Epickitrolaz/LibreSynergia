@@ -1,4 +1,4 @@
-# Antigravity & OpenCode Agent Instructions — Librus Mobile Client
+# Antigravity & OpenCode Agent Instructions — LibreSynergia Client
 
 Guidance for Antigravity, OpenCode, and other AI coding agents working in this repository.
 
@@ -6,7 +6,7 @@ Guidance for Antigravity, OpenCode, and other AI coding agents working in this r
 
 ## 1. Project Mission
 
-You are building a clean, modern, offline-first **Android and iOS mobile client for Librus Synergia**, the primary electronic school register used in Poland.
+You are building a clean, modern, offline-first **Android and iOS mobile client for Librus Synergia**, officially named **LibreSynergia**.
 
 The user will provide their own Android SDK, Xcode, and local build tools. Your responsibility is writing clean, correct, idiomatic cross-platform code, unit tests, and architecture.
 
@@ -68,6 +68,10 @@ The following files and folders have been present in this repository from the st
    Cap concurrent connections to 4–6 per host. Polling should never be more frequent than 15 minutes.
 8. **Custom Flat SVG / Vector Icons Only**:
    Always use custom, flat SVG or Compose ImageVector icons (`LibrusIcons`) instead of raw Unicode emojis. Never use raw emojis in UI strings or layouts.
+9. **Never Use Stock / Default Android Components (e.g. Default DropdownMenu / Spinner)**:
+   **NEVER use stock or unstyled Android components** (such as default Android `DropdownMenu`, `DropdownMenuItem`, `Spinner`, etc.). Always implement custom components that adhere to the LibreSynergia design language. First explore the codebase to find if a custom component was already built (such as `SearchableDropdown`, `AnimatedDialogContainer`, `AppLogo`, etc.) and reuse it; if no such component has been implemented yet, design and code a custom one according to the app's established design language (expressive animations, rounded surfaces, integrated search bars, theme awareness).
+10. **Official LibreSynergia Branding & Custom App Logo**:
+   Always refer to the application by its official brand name **LibreSynergia** (never "LibrusMobile" or "Librus Mobile"). Display the user-selected app logo (`AppIconVectorDrawables.DefaultMonogram` or `AppIconVectorDrawables.VariantBook`) via the `AppLogo` component rather than generic or stock icons.
 
 ---
 

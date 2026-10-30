@@ -30,6 +30,7 @@ import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
 import pl.librus.mobile.ui.animation.LocalMotionSpec
 import pl.librus.mobile.ui.animation.MotionSpec
+import pl.librus.mobile.ui.components.AppLogo
 import pl.librus.mobile.ui.icons.AppIcon
 import pl.librus.mobile.ui.icons.AppIconVectorDrawables
 import pl.librus.mobile.ui.theme.AppThemeMode
@@ -481,26 +482,28 @@ fun SettingsScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
+                    AppLogo(
+                        appIcon = currentAppIcon,
+                        size = 32.dp,
+                        shapeRadius = 8.dp
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = strings.aboutSection,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
+                    Column {
+                        Text(
+                            text = strings.appName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                        Text(
+                            text = strings.appVersion,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Text(
-                    text = strings.appVersion,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp
-                )
                 Text(
                     text = strings.appDescription,
                     fontSize = 12.sp,

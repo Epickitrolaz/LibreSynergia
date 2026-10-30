@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,11 +19,13 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import pl.librus.mobile.ui.Strings
 import pl.librus.mobile.ui.animation.LocalMotionSpec
+import pl.librus.mobile.ui.icons.AppIcon
 
 @Composable
 fun AppLaunchScreen(
     isAppReady: Boolean,
     strings: Strings,
+    appIcon: AppIcon = AppIcon.DEFAULT,
     onLaunchComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -147,10 +147,10 @@ fun AppLaunchScreen(
                     )
                 }
 
-                // Core Emblem
+                // Core LibreSynergia App Logo Emblem
                 Surface(
-                    shape = RoundedCornerShape(28.dp),
-                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color.Transparent,
                     tonalElevation = 6.dp,
                     shadowElevation = 8.dp,
                     modifier = Modifier
@@ -158,17 +158,11 @@ fun AppLaunchScreen(
                         .scale(emblemScale.value)
                         .alpha(emblemAlpha.value)
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
+                    AppLogo(
+                        appIcon = appIcon,
+                        size = 80.dp,
                         modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(44.dp)
-                        )
-                    }
+                    )
                 }
             }
 

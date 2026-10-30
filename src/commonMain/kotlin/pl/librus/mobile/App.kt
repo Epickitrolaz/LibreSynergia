@@ -217,6 +217,7 @@ fun App(
                     AppLaunchScreen(
                         isAppReady = authState !is AuthState.Authenticating,
                         strings = strings,
+                        appIcon = currentAppIcon,
                         onLaunchComplete = { isLaunchComplete = true }
                     )
                 } else if (isAddingAccount) {
@@ -252,6 +253,7 @@ fun App(
                             LoginScreen(
                                 authState = authState,
                                 strings = strings,
+                                currentAppIcon = currentAppIcon,
                                 onLoginPortal = { email, pass ->
                                     coroutineScope.launch {
                                         authManager.loginPortal(email, pass, portalAuthClient)
@@ -292,6 +294,7 @@ fun App(
                 LoginScreen(
                     authState = state,
                     strings = strings,
+                    currentAppIcon = currentAppIcon,
                     onLoginPortal = { email, pass ->
                         coroutineScope.launch {
                             authManager.loginPortal(email, pass, portalAuthClient)
@@ -436,7 +439,7 @@ fun App(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = backgroundSyncMessage ?: strings.syncInProgress,
+                                        text = strings.syncInProgress,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -696,6 +699,7 @@ fun App(
                                         unreadMessagesCount = unreadMessagesCount,
                                         pendingHomeworkCount = pendingHomeworkCount,
                                         unreadNoticesCount = unreadNoticesCount,
+                                        currentAppIcon = currentAppIcon,
                                         strings = strings,
                                         onNavigateToMessages = { currentScreen = ScreenKey.MESSAGES },
                                         onNavigateToHomework = { currentScreen = ScreenKey.HOMEWORK },

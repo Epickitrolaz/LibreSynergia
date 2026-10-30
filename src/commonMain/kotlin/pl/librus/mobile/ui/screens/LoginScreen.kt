@@ -33,12 +33,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.auth.AuthState
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.components.AppLogo
+import pl.librus.mobile.ui.icons.AppIcon
 import pl.librus.mobile.ui.icons.LibrusIcons
 
 @Composable
 fun LoginScreen(
     authState: AuthState,
     strings: Strings,
+    currentAppIcon: AppIcon = AppIcon.DEFAULT,
     onLoginPortal: (String, String) -> Unit,
     onLoginGateway: (String, String) -> Unit,
     onLoginDemo: () -> Unit,
@@ -66,21 +69,11 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // App Branding Logo Icon
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.School,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(42.dp)
-                )
-            }
+            // Official LibreSynergia App Branding Logo
+            AppLogo(
+                appIcon = currentAppIcon,
+                size = 76.dp
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

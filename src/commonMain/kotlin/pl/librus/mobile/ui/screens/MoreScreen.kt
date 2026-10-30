@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.librus.mobile.domain.models.StudentProfile
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.components.AppLogo
+import pl.librus.mobile.ui.icons.AppIcon
 
 @Composable
 fun MoreScreen(
@@ -26,6 +28,7 @@ fun MoreScreen(
     unreadMessagesCount: Int,
     pendingHomeworkCount: Int,
     unreadNoticesCount: Int,
+    currentAppIcon: AppIcon = AppIcon.DEFAULT,
     strings: Strings,
     onNavigateToMessages: () -> Unit,
     onNavigateToHomework: () -> Unit,
@@ -39,13 +42,24 @@ fun MoreScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // Screen Title
-        Text(
-            text = strings.moreTitle,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        // Screen Title with App Logo
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = strings.moreTitle,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            AppLogo(
+                appIcon = currentAppIcon,
+                size = 36.dp,
+                shapeRadius = 9.dp
+            )
+        }
 
         Spacer(modifier = Modifier.height(18.dp))
 

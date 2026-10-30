@@ -274,7 +274,7 @@ private fun HomeworkCard(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                     ) {
                         Text(
-                            text = homework.subjectName.ifEmpty { "Zadanie" },
+                            text = homework.subjectName.ifEmpty { strings.assignmentDefault },
                             color = MaterialTheme.colorScheme.primary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,

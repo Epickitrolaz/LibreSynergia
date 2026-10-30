@@ -1,4 +1,4 @@
-# Librus Mobile — Cross-Platform Client for Librus Synergia
+# LibreSynergia — Cross-Platform Client for Librus Synergia
 
 A modern, clean, offline-first mobile client for **Librus Synergia** targeting **Android and iOS**, built with **Kotlin Multiplatform (KMP)** and **Compose Multiplatform (CMP)**.
 

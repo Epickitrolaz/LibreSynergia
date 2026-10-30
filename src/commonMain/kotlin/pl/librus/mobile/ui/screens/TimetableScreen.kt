@@ -137,7 +137,8 @@ fun TimetableScreen(
                 displayDays.forEachIndexed { index, day ->
                     val isSelected = index == selectedDayIndex
                     val isToday = day.date == today.toString()
-                    val twoLetterLabel = getTwoLetterDay(day.dayOfWeekName, strings)
+                    val parsedDayOfWeek = runCatching { LocalDate.parse(day.date).dayOfWeek }.getOrNull()
+                    val twoLetterLabel = if (parsedDayOfWeek != null) strings.getTwoLetterDay(parsedDayOfWeek) else getTwoLetterDay(day.dayOfWeekName, strings)
                     val dayOfMonth = day.date.split("-").lastOrNull()?.toIntOrNull()?.toString() ?: ""
 
                     Surface(

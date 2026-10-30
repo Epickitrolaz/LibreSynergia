@@ -306,12 +306,23 @@ private fun AgendaEventRow(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val eventTypeLabel = when (event.type) {
+                        AgendaEventType.EXAM -> strings.typeExam
+                        AgendaEventType.QUIZ -> strings.typeQuiz
+                        AgendaEventType.HOMEWORK -> strings.typeHomework
+                        AgendaEventType.PROJECT -> strings.typeProject
+                        AgendaEventType.TRIP -> strings.typeTrip
+                        AgendaEventType.MEETING -> strings.typeMeeting
+                        AgendaEventType.INFORMATION -> strings.typeOther
+                        AgendaEventType.OTHER -> if (event.typeName.isNotBlank()) event.typeName else strings.typeOther
+                    }
+
                     Surface(
                         shape = RoundedCornerShape(6.dp),
                         color = badgeColor.copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = event.typeName.ifEmpty { "Wydarzenie" }.uppercase(),
+                            text = eventTypeLabel.uppercase(),
                             color = badgeColor,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.ExtraBold,
@@ -352,7 +363,7 @@ private fun AgendaEventRow(
                             modifier = Modifier.size(13.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        val lessonLabel = if (event.lessonNo != null) "Lekcja ${event.lessonNo}" else ""
+                        val lessonLabel = if (event.lessonNo != null) "${strings.statusLessonNo} ${event.lessonNo}" else ""
                         val timeLabel = if (event.timeFrom != null && event.timeTo != null) {
                             "${event.timeFrom} - ${event.timeTo}"
                         } else event.timeFrom.orEmpty()
