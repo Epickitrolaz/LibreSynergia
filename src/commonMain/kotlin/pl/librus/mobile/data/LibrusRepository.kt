@@ -50,6 +50,15 @@ class LibrusRepository(
     private val _notices = MutableStateFlow<List<SchoolNotice>>(emptyList())
     val notices: StateFlow<List<SchoolNotice>> = _notices.asStateFlow()
 
+    private val _messages = MutableStateFlow<List<LibrusMessage>>(emptyList())
+    val messages: StateFlow<List<LibrusMessage>> = _messages.asStateFlow()
+
+    private val _homeworks = MutableStateFlow<List<Homework>>(emptyList())
+    val homeworks: StateFlow<List<Homework>> = _homeworks.asStateFlow()
+
+    private val _agendaEvents = MutableStateFlow<List<AgendaEvent>>(emptyList())
+    val agendaEvents: StateFlow<List<AgendaEvent>> = _agendaEvents.asStateFlow()
+
     private val _luckyNumber = MutableStateFlow<LuckyNumber?>(null)
     val luckyNumber: StateFlow<LuckyNumber?> = _luckyNumber.asStateFlow()
 
@@ -86,6 +95,18 @@ class LibrusRepository(
         _notices.value = cached.notices.map {
             if (it.id in readIds) it.copy(isRead = true) else it
         }
+
+        val readMsgIds = getReadMessageIds()
+        _messages.value = cached.messages.map {
+            if (it.id in readMsgIds) it.copy(isRead = true) else it
+        }
+
+        val doneHwIds = getCompletedHomeworkIds()
+        _homeworks.value = cached.homeworks.map {
+            if (it.id in doneHwIds) it.copy(isDone = true) else it
+        }
+
+        _agendaEvents.value = cached.agendaEvents
     }
 
     private fun getReadNoticeIds(): Set<String> {
@@ -100,6 +121,36 @@ class LibrusRepository(
     private fun saveReadNoticeIds(ids: Set<String>) {
         try {
             storage.putString(KEY_READ_NOTICES, json.encodeToString(ids))
+        } catch (_: Exception) {}
+    }
+
+    private fun getReadMessageIds(): Set<String> {
+        val str = storage.getString(KEY_READ_MESSAGES) ?: return emptySet()
+        return try {
+            json.decodeFromString<Set<String>>(str)
+        } catch (_: Exception) {
+            emptySet()
+        }
+    }
+
+    private fun saveReadMessageIds(ids: Set<String>) {
+        try {
+            storage.putString(KEY_READ_MESSAGES, json.encodeToString(ids))
+        } catch (_: Exception) {}
+    }
+
+    private fun getCompletedHomeworkIds(): Set<String> {
+        val str = storage.getString(KEY_DONE_HOMEWORKS) ?: return emptySet()
+        return try {
+            json.decodeFromString<Set<String>>(str)
+        } catch (_: Exception) {
+            emptySet()
+        }
+    }
+
+    private fun saveCompletedHomeworkIds(ids: Set<String>) {
+        try {
+            storage.putString(KEY_DONE_HOMEWORKS, json.encodeToString(ids))
         } catch (_: Exception) {}
     }
 
@@ -190,6 +241,28 @@ class LibrusRepository(
                 }
             }
 
+            // Live messages
+            val readMsgIds = getReadMessageIds()
+            val liveMessages = liveApiClient?.fetchMessages(session, emptyMap())
+            if (liveMessages != null) {
+                _messages.value = liveMessages.map {
+                    if (it.id in readMsgIds) it.copy(isRead = true) else it
+                }
+            }
+
+            // Live homework and agenda
+            val doneHwIds = getCompletedHomeworkIds()
+            val hwAndAgenda = liveApiClient?.fetchHomeWorksAndAgenda(session, subjectsMap, emptyMap())
+            if (hwAndAgenda != null) {
+                val (hw, ag) = hwAndAgenda
+                _homeworks.value = hw.map {
+                    if (it.id in doneHwIds) it.copy(isDone = true) else it
+                }
+                _agendaEvents.value = ag.sortedWith(
+                    compareBy<AgendaEvent> { it.date }.thenBy { it.lessonNo ?: 99 }
+                )
+            }
+
             // Save to persistent storage cache (never with mock data for live sessions)
             val cacheState = CachedAppState(
                 profile = profile,
@@ -204,7 +277,12 @@ class LibrusRepository(
                 attendances = _attendances.value,
                 attendanceOwner = attendanceOwner,
                 attendanceStats = _attendanceStats.value,
-                notices = _notices.value
+                notices = _notices.value,
+                messages = _messages.value,
+                homeworks = _homeworks.value,
+                agendaEvents = _agendaEvents.value,
+                completedHomeworkIds = doneHwIds,
+                readMessageIds = readMsgIds
             )
             storage.putString(AuthManager.KEY_CACHED_STATE, json.encodeToString(cacheState))
         } catch (e: CancellationException) {
@@ -233,7 +311,25 @@ class LibrusRepository(
         _timetable.value = MockDataProvider.timetableWeek
         _attendances.value = MockDataProvider.attendances
         _attendanceStats.value = AttendanceCalculator.calculateStats(MockDataProvider.attendances)
-        _notices.value = MockDataProvider.notices
+        
+        val readNoticeIds = getReadNoticeIds()
+        _notices.value = MockDataProvider.notices.map {
+            if (it.id in readNoticeIds) it.copy(isRead = true) else it
+        }
+
+        val readMsgIds = getReadMessageIds()
+        _messages.value = MockDataProvider.messages.map {
+            if (it.id in readMsgIds) it.copy(isRead = true) else it
+        }
+
+        val doneHwIds = getCompletedHomeworkIds()
+        _homeworks.value = MockDataProvider.homeworks.map {
+            if (it.id in doneHwIds) it.copy(isDone = true) else it
+        }
+
+        _agendaEvents.value = MockDataProvider.agendaEvents.sortedWith(
+            compareBy<AgendaEvent> { it.date }.thenBy { it.lessonNo ?: 99 }
+        )
 
         // Save mock state to cache as well
         val cacheState = CachedAppState(
@@ -249,7 +345,12 @@ class LibrusRepository(
             attendances = _attendances.value,
             attendanceOwner = attendanceOwner,
             attendanceStats = _attendanceStats.value,
-            notices = _notices.value
+            notices = _notices.value,
+            messages = _messages.value,
+            homeworks = _homeworks.value,
+            agendaEvents = _agendaEvents.value,
+            completedHomeworkIds = doneHwIds,
+            readMessageIds = readMsgIds
         )
         storage.putString(AuthManager.KEY_CACHED_STATE, json.encodeToString(cacheState))
     }
@@ -273,7 +374,56 @@ class LibrusRepository(
         }
     }
 
+    fun markMessageAsRead(messageId: String) {
+        val readIds = getReadMessageIds().toMutableSet()
+        readIds.add(messageId)
+        saveReadMessageIds(readIds)
+
+        _messages.value = _messages.value.map {
+            if (it.id == messageId) it.copy(isRead = true) else it
+        }
+
+        storage.getString(AuthManager.KEY_CACHED_STATE)?.let { cachedJson ->
+            try {
+                val cached = json.decodeFromString<CachedAppState>(cachedJson)
+                val updated = cached.copy(
+                    messages = _messages.value,
+                    readMessageIds = readIds
+                )
+                storage.putString(AuthManager.KEY_CACHED_STATE, json.encodeToString(updated))
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun toggleHomeworkDone(homeworkId: String) {
+        val doneIds = getCompletedHomeworkIds().toMutableSet()
+        val willBeDone = homeworkId !in doneIds
+        if (willBeDone) {
+            doneIds.add(homeworkId)
+        } else {
+            doneIds.remove(homeworkId)
+        }
+        saveCompletedHomeworkIds(doneIds)
+
+        _homeworks.value = _homeworks.value.map {
+            if (it.id == homeworkId) it.copy(isDone = willBeDone) else it
+        }
+
+        storage.getString(AuthManager.KEY_CACHED_STATE)?.let { cachedJson ->
+            try {
+                val cached = json.decodeFromString<CachedAppState>(cachedJson)
+                val updated = cached.copy(
+                    homeworks = _homeworks.value,
+                    completedHomeworkIds = doneIds
+                )
+                storage.putString(AuthManager.KEY_CACHED_STATE, json.encodeToString(updated))
+            } catch (_: Exception) {}
+        }
+    }
+
     companion object {
         const val KEY_READ_NOTICES = "librus_read_notice_ids"
+        const val KEY_READ_MESSAGES = "librus_read_message_ids"
+        const val KEY_DONE_HOMEWORKS = "librus_done_homework_ids"
     }
 }

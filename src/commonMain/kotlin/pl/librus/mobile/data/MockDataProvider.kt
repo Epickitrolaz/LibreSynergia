@@ -236,4 +236,234 @@ object MockDataProvider {
             isRead = true
         )
     )
+
+    val messages = listOf(
+        LibrusMessage(
+            id = "m1",
+            subject = "Zebranie z rodzicami - podsumowanie I kwartału",
+            body = "Szanowni Państwo, Drodzy Uczniowie,\n\nPrzypominam o zbliżającym się zebraniu rodziców w czwartek 5 listopada o godz. 17:30 w sali 204. Podczas spotkania omówimy dotychczasowe postępy w nauce, frekwencję oraz planowaną wycieczkę integracyjną.\n\nW razie pytań zapraszam do kontaktu przez Librusa.\n\nZ poważaniem,\nmgr Anna Nowak",
+            senderName = "mgr Anna Nowak (Wychowawca)",
+            senderId = "t1",
+            date = "2026-10-29 16:30",
+            isRead = false,
+            hasAttachments = false
+        ),
+        LibrusMessage(
+            id = "m2",
+            subject = "Zakres materiału na sprawdzian z biologii",
+            body = "Drodzy Uczniowie,\n\nW załączeniu przesyłam prezentację oraz zagadnienia do sprawdzianu z działu 'Układ krążenia i układ odpornościowy', który odbędzie się w piątek 6 listopada na 3. lekcji.\n\nProszę zwrócić szczególną uwagę na budowę serca oraz mechanizmy odporności swoistej.\n\nPozdrawiam,\ndr Jan Kowalski",
+            senderName = "dr Jan Kowalski (Biologia)",
+            senderId = "t2",
+            date = "2026-10-27 12:15",
+            isRead = true,
+            hasAttachments = true,
+            attachments = listOf(
+                MessageAttachment(id = "att1", name = "Uklad_krazenia_powtorzenie.pdf", size = 2450000)
+            )
+        ),
+        LibrusMessage(
+            id = "m3",
+            subject = "Zaproszenie do udziału w Konkursie Informatycznym",
+            body = "Cześć!\n\nRuszyły zapisy do etapu szkolnego Olimpiady Informatycznej. Wszystkich zainteresowanych programowaniem i algorytmiką zapraszam na krótkie spotkanie organizacyjne w najbliższy wtorek po 5. lekcji w sali 105.\n\nmgr inż. Piotr Wiśniewski",
+            senderName = "mgr inż. Piotr Wiśniewski (Informatyka)",
+            senderId = "t3",
+            date = "2026-10-25 09:00",
+            isRead = true,
+            hasAttachments = false
+        ),
+        LibrusMessage(
+            id = "m4",
+            subject = "Wyjście do Teatru Wielkiego - informacje organizacyjne",
+            body = "Dzień dobry,\n\nZbiórka przed budynkiem szkoły w czwartek 12 listopada o godzinie 8:30. Spektakl rozpoczyna się o 10:00. Obowiązuje strój wizytowy/galowy. Szacowany powrót do szkoły około godziny 13:30.\n\nPozdrawiam,\nmgr Ewa Dąbrowska",
+            senderName = "mgr Ewa Dąbrowska (Język polski)",
+            senderId = "t4",
+            date = "2026-10-22 14:10",
+            isRead = true,
+            hasAttachments = false
+        )
+    )
+
+    val homeworks = listOf(
+        Homework(
+            id = "hw1",
+            date = "2026-11-02",
+            addDate = "2026-10-30",
+            subjectId = "2",
+            subjectName = "Matematyka",
+            teacherName = "mgr Tomasz Lewandowski",
+            content = "Zadania 12, 14 i 16 ze strony 84 z podręcznika. Dla chętnych zadanie 18* z gwiazdką (postać iloczynowa funkcji kwadratowej).",
+            categoryName = "Zadanie domowe",
+            isDone = false
+        ),
+        Homework(
+            id = "hw2",
+            date = "2026-11-03",
+            addDate = "2026-10-29",
+            subjectId = "3",
+            subjectName = "Język angielski",
+            teacherName = "mgr Joanna Zielińska",
+            content = "Workbook Unit 4, pages 32-33 (Vocabulary & Grammar in Context). Powtórzyć tabelę czasowników nieregularnych (str. 120-121).",
+            categoryName = "Ćwiczenia",
+            isDone = false
+        ),
+        Homework(
+            id = "hw3",
+            date = "2026-11-04",
+            addDate = "2026-10-28",
+            subjectId = "5",
+            subjectName = "Fizyka",
+            teacherName = "dr inż. Marek Wójcik",
+            content = "Karta pracy: Obliczanie oporu zastępczego w obwodach szeregowych i równoległych (zadania 1-4).",
+            categoryName = "Karta pracy",
+            isDone = false,
+            attachments = listOf(
+                HomeworkAttachment(id = "hatt1", name = "Karta_pracy_opory.pdf")
+            )
+        ),
+        Homework(
+            id = "hw4",
+            date = "2026-10-28",
+            addDate = "2026-10-25",
+            subjectId = "6",
+            subjectName = "Historia",
+            teacherName = "mgr Krzysztof Kamiński",
+            content = "Krótka notatka biograficzna o Tadeuszu Kościuszce i przyczynach wybuchu insurekcji kościuszkowskiej (ok. 1 strona w zeszycie).",
+            categoryName = "Zadanie domowe",
+            isDone = true
+        ),
+        Homework(
+            id = "hw5",
+            date = "2026-10-26",
+            addDate = "2026-10-21",
+            subjectId = "4",
+            subjectName = "Informatyka",
+            teacherName = "mgr inż. Piotr Wiśniewski",
+            content = "Dokończenie implementacji algorytmu sortowania bąbelkowego w Pythonie i przesłanie pliku .py na platformę szkolną.",
+            categoryName = "Zadanie praktyczne",
+            isDone = true
+        )
+    )
+
+    val agendaEvents = listOf(
+        AgendaEvent(
+            id = "ev1",
+            date = "2026-11-02",
+            timeFrom = "08:55",
+            timeTo = "09:40",
+            lessonNo = 2,
+            title = "Kartkówka: Równania kwadratowe",
+            description = "Wzory Viete'a oraz postać kanoniczna funkcji kwadratowej. Czas trwania: 15 minut.",
+            subjectId = "2",
+            subjectName = "Matematyka",
+            teacherName = "mgr Tomasz Lewandowski",
+            type = AgendaEventType.QUIZ,
+            typeName = "Kartkówka",
+            colorHex = "#FF9800"
+        ),
+        AgendaEvent(
+            id = "ev2",
+            date = "2026-11-04",
+            timeFrom = "10:50",
+            timeTo = "11:35",
+            lessonNo = 4,
+            title = "Sprawdzian: Powstanie Kościuszkowskie",
+            description = "Sprawdzian całogodzinny z rozdziału 2. Przyczyny, przebieg, bitwy pod Racławicami i Szczekocinami, uniwersał połaniecki oraz skutki powstania.",
+            subjectId = "6",
+            subjectName = "Historia",
+            teacherName = "mgr Krzysztof Kamiński",
+            type = AgendaEventType.EXAM,
+            typeName = "Sprawdzian",
+            colorHex = "#F44336"
+        ),
+        AgendaEvent(
+            id = "ev3",
+            date = "2026-11-05",
+            timeFrom = "11:45",
+            timeTo = "12:30",
+            lessonNo = 5,
+            title = "Vocabulary Quiz: Unit 4 Technology",
+            description = "Słówka i zwroty ze stron 45-48 podręcznika (nowe technologie i media społecznościowe).",
+            subjectId = "3",
+            subjectName = "Język angielski",
+            teacherName = "mgr Joanna Zielińska",
+            type = AgendaEventType.QUIZ,
+            typeName = "Kartkówka",
+            colorHex = "#FF9800"
+        ),
+        AgendaEvent(
+            id = "ev4",
+            date = "2026-11-06",
+            timeFrom = "09:50",
+            timeTo = "10:35",
+            lessonNo = 3,
+            title = "Sprawdzian: Układ krążenia i odporność",
+            description = "Budowa serca, mały i duży obieg krwi, skład krwi, grupy krwi, konflikt serologiczny, mechanizmy odporności.",
+            subjectId = "7",
+            subjectName = "Biologia",
+            teacherName = "dr Jan Kowalski",
+            type = AgendaEventType.EXAM,
+            typeName = "Sprawdzian",
+            colorHex = "#F44336"
+        ),
+        AgendaEvent(
+            id = "ev5",
+            date = "2026-11-09",
+            timeFrom = null,
+            timeTo = null,
+            lessonNo = null,
+            title = "Oddanie projektu z baz danych",
+            description = "Ostateczny termin przesłania diagramu ERD oraz skryptu SQL tworzącego relacyjną bazę danych.",
+            subjectId = "4",
+            subjectName = "Informatyka",
+            teacherName = "mgr inż. Piotr Wiśniewski",
+            type = AgendaEventType.PROJECT,
+            typeName = "Projekt",
+            colorHex = "#9C27B0"
+        ),
+        AgendaEvent(
+            id = "ev6",
+            date = "2026-11-11",
+            timeFrom = null,
+            timeTo = null,
+            lessonNo = null,
+            title = "Narodowe Święto Niepodległości",
+            description = "Dzień ustawowo wolny od zajęć dydaktyczno-wychowawczych.",
+            subjectId = "",
+            subjectName = "Szkoła",
+            teacherName = "",
+            type = AgendaEventType.TRIP,
+            typeName = "Dzień wolny",
+            colorHex = "#4CAF50"
+        ),
+        AgendaEvent(
+            id = "ev7",
+            date = "2026-11-13",
+            timeFrom = "17:30",
+            timeTo = "19:00",
+            lessonNo = null,
+            title = "Zebranie z rodzicami",
+            description = "Spotkanie wychowawcy z rodzicami w sali 204. Konsultacje indywidualne z nauczycielami.",
+            subjectId = "",
+            subjectName = "Szkoła",
+            teacherName = "mgr Anna Nowak",
+            type = AgendaEventType.MEETING,
+            typeName = "Zebranie",
+            colorHex = "#2196F3"
+        ),
+        AgendaEvent(
+            id = "ev8",
+            date = "2026-10-23",
+            timeFrom = "08:00",
+            timeTo = "08:45",
+            lessonNo = 1,
+            title = "Sprawdzian: Elektrostatyka",
+            description = "Prawo Coulomba, pole elektrostatyczne, linie sił pola, potencjał i napięcie elektryczne, kondensatory.",
+            subjectId = "5",
+            subjectName = "Fizyka",
+            teacherName = "dr inż. Marek Wójcik",
+            type = AgendaEventType.EXAM,
+            typeName = "Sprawdzian",
+            colorHex = "#F44336"
+        )
+    )
 }

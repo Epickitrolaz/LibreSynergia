@@ -43,7 +43,7 @@ fun HomeScreen(
     onNavigateToSimulator: () -> Unit = onNavigateToGrades,
     onNavigateToTimetable: () -> Unit,
     onNavigateToAttendance: () -> Unit,
-    onNavigateToNotices: () -> Unit,
+    onNavigateToNotices: () -> Unit = {},
     onGradeClick: (Grade) -> Unit,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {}
@@ -76,6 +76,7 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
@@ -205,77 +206,6 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Dedicated Accessible Notice Board Tile (Always accessible)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onNavigateToNotices),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (unreadNotices.isNotEmpty()) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (unreadNotices.isNotEmpty()) Icons.Default.NotificationsActive else Icons.Default.Campaign,
-                            contentDescription = null,
-                            tint = if (unreadNotices.isNotEmpty()) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = strings.noticeBoardMenu,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = if (unreadNotices.isNotEmpty()) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = if (unreadNotices.isNotEmpty()) {
-                                "${unreadNotices.size} ${strings.newNoticeBadge.lowercase()}: ${unreadNotices.first().subject}"
-                            } else {
-                                strings.noticeBoardDesc
-                            },
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            color = if (unreadNotices.isNotEmpty()) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (unreadNotices.isNotEmpty()) {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(end = 4.dp)
-                        ) {
-                            Text(
-                                text = "${unreadNotices.size}",
-                                color = MaterialTheme.colorScheme.onError,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-                    Icon(
-                        Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
 

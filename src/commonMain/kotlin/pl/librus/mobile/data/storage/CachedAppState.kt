@@ -18,5 +18,10 @@ data class CachedAppState(
     val attendances: List<Attendance> = emptyList(),
     val attendanceOwner: String? = null,
     val attendanceStats: AttendanceStats = AttendanceStats(),
-    val notices: List<SchoolNotice> = emptyList()
+    val notices: List<SchoolNotice> = emptyList(),
+    val messages: List<LibrusMessage> = emptyList(),
+    val homeworks: List<Homework> = emptyList(),
+    val agendaEvents: List<AgendaEvent> = emptyList(),
+    val completedHomeworkIds: Set<String> = emptySet(),
+    val readMessageIds: Set<String> = emptySet()
 )

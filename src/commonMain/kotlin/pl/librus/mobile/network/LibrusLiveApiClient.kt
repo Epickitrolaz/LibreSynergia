@@ -261,4 +261,210 @@ class LibrusLiveApiClient(
             }
         } catch (_: Exception) {}
     }
+
+    suspend fun fetchMessages(session: UserSession, usersMap: Map<String, String>): List<LibrusMessage>? {
+        val root = fetchJson(session, "Messages")?.jsonObject ?: return null
+        val array = (root["Messages"] as? JsonArray) ?: (root["data"] as? JsonArray) ?: return emptyList()
+
+        return array.mapNotNull { elem ->
+            val obj = elem.jsonObject
+            val id = obj["Id"]?.jsonPrimitive?.contentOrNull
+                ?: obj["messageId"]?.jsonPrimitive?.contentOrNull
+                ?: return@mapNotNull null
+
+            val subject = obj["Subject"]?.jsonPrimitive?.contentOrNull
+                ?: obj["topic"]?.jsonPrimitive?.contentOrNull
+                ?: "(Bez tematu)"
+
+            val body = obj["Body"]?.jsonPrimitive?.contentOrNull
+                ?: obj["content"]?.jsonPrimitive?.contentOrNull
+                ?: ""
+
+            val senderObj = obj["Sender"] as? JsonObject
+            val senderId = senderObj?.get("Id")?.jsonPrimitive?.contentOrNull
+                ?: obj["senderId"]?.jsonPrimitive?.contentOrNull
+
+            val senderNameFromObj = listOfNotNull(
+                senderObj?.get("FirstName")?.jsonPrimitive?.contentOrNull,
+                senderObj?.get("LastName")?.jsonPrimitive?.contentOrNull
+            ).filter { it.isNotBlank() }.joinToString(" ")
+
+            val senderName = when {
+                senderNameFromObj.isNotBlank() -> senderNameFromObj
+                senderId != null && usersMap.containsKey(senderId) -> usersMap[senderId].orEmpty()
+                else -> obj["senderName"]?.jsonPrimitive?.contentOrNull ?: "Nauczyciel"
+            }
+
+            val date = obj["SendDate"]?.jsonPrimitive?.contentOrNull
+                ?: obj["sendDate"]?.jsonPrimitive?.contentOrNull
+                ?: obj["Date"]?.jsonPrimitive?.contentOrNull
+                ?: ""
+
+            val readDate = obj["ReadDate"]?.jsonPrimitive?.contentOrNull
+                ?: obj["readDate"]?.jsonPrimitive?.contentOrNull
+            val wasRead = (readDate != null && readDate.isNotBlank()) ||
+                (obj["WasRead"]?.jsonPrimitive?.booleanOrNull == true)
+
+            val attachmentsArray = (obj["Attachments"] as? JsonArray) ?: (obj["attachments"] as? JsonArray)
+            val attachmentsList = attachmentsArray?.mapNotNull { attElem ->
+                val attObj = attElem as? JsonObject ?: return@mapNotNull null
+                val attId = attObj["Id"]?.jsonPrimitive?.contentOrNull ?: attObj["id"]?.jsonPrimitive?.contentOrNull ?: ""
+                val attName = attObj["Name"]?.jsonPrimitive?.contentOrNull ?: attObj["name"]?.jsonPrimitive?.contentOrNull ?: "Załącznik"
+                MessageAttachment(id = attId, name = attName)
+            }.orEmpty()
+
+            LibrusMessage(
+                id = id,
+                subject = subject,
+                body = body,
+                senderName = senderName,
+                senderId = senderId,
+                date = date,
+                isRead = wasRead,
+                hasAttachments = attachmentsList.isNotEmpty() || obj["HasAttachments"]?.jsonPrimitive?.booleanOrNull == true,
+                attachments = attachmentsList
+            )
+        }
+    }
+
+    suspend fun fetchHomeWorksAndAgenda(
+        session: UserSession,
+        subjectsMap: Map<String, Subject>,
+        usersMap: Map<String, String>
+    ): Pair<List<Homework>, List<AgendaEvent>>? {
+        val root = fetchJson(session, "HomeWorks")?.jsonObject ?: return null
+        val array = root["HomeWorks"]?.jsonArray ?: return emptyList<Homework>() to emptyList<AgendaEvent>()
+
+        // Fetch categories to get category names if possible
+        val categoriesRoot = fetchJson(session, "HomeWorks/Categories")?.jsonObject
+        val categoriesArray = categoriesRoot?.get("Categories")?.jsonArray
+        val categoryNames = categoriesArray?.mapNotNull { catElem ->
+            val catObj = catElem as? JsonObject ?: return@mapNotNull null
+            val id = catObj["Id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+            val name = catObj["Name"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+            id to name
+        }?.toMap().orEmpty()
+
+        val homeworks = mutableListOf<Homework>()
+        val agendaEvents = mutableListOf<AgendaEvent>()
+
+        for (elem in array) {
+            val obj = elem as? JsonObject ?: continue
+            val id = obj["Id"]?.jsonPrimitive?.contentOrNull ?: continue
+            val date = obj["Date"]?.jsonPrimitive?.contentOrNull ?: ""
+            val content = obj["Content"]?.jsonPrimitive?.contentOrNull ?: ""
+            val addDate = obj["AddDate"]?.jsonPrimitive?.contentOrNull ?: ""
+            val timeFrom = obj["TimeFrom"]?.jsonPrimitive?.contentOrNull
+            val timeTo = obj["TimeTo"]?.jsonPrimitive?.contentOrNull
+            val lessonNo = obj["LessonNo"]?.jsonPrimitive?.contentOrNull?.toIntOrNull()
+
+            val subjId = (obj["Subject"] as? JsonObject)?.get("Id")?.jsonPrimitive?.contentOrNull ?: ""
+            val subj = subjectsMap[subjId]
+            val subjName = subj?.name ?: if (subjId.isNotEmpty()) "Przedmiot $subjId" else "Inne"
+
+            val teacherId = (obj["CreatedBy"] as? JsonObject)?.get("Id")?.jsonPrimitive?.contentOrNull ?: ""
+            val teacherName = usersMap[teacherId] ?: ""
+
+            val catId = (obj["Category"] as? JsonObject)?.get("Id")?.jsonPrimitive?.contentOrNull ?: ""
+            val catName = categoryNames[catId] ?: ""
+
+            val lowerContent = content.lowercase()
+            val lowerCat = catName.lowercase()
+
+            val (eventType, typeName, colorHex) = when {
+                lowerContent.contains("sprawdzian") || lowerCat.contains("sprawdzian") ||
+                lowerContent.contains("praca klasowa") || lowerCat.contains("praca klasowa") -> {
+                    Triple(AgendaEventType.EXAM, "Sprawdzian", "#F44336")
+                }
+                lowerContent.contains("kartkówka") || lowerCat.contains("kartkówka") -> {
+                    Triple(AgendaEventType.QUIZ, "Kartkówka", "#FF9800")
+                }
+                lowerContent.contains("projekt") || lowerCat.contains("projekt") -> {
+                    Triple(AgendaEventType.PROJECT, "Projekt", "#9C27B0")
+                }
+                lowerContent.contains("wycieczka") || lowerCat.contains("wycieczka") ||
+                lowerContent.contains("wyjście") -> {
+                    Triple(AgendaEventType.TRIP, "Wycieczka", "#4CAF50")
+                }
+                lowerContent.contains("zebranie") || lowerCat.contains("zebranie") ||
+                lowerContent.contains("konsultacj") -> {
+                    Triple(AgendaEventType.MEETING, "Zebranie", "#2196F3")
+                }
+                lowerContent.contains("zadanie") || lowerCat.contains("zadanie") ||
+                lowerCat.contains("domow") || lowerContent.contains("ćwiczen") -> {
+                    Triple(AgendaEventType.HOMEWORK, "Zadanie domowe", "#3F51B5")
+                }
+                else -> {
+                    Triple(AgendaEventType.OTHER, if (catName.isNotEmpty()) catName else "Wydarzenie", "#607D8B")
+                }
+            }
+
+            val title = if (content.length > 50) {
+                content.substringBefore("\n").take(50).trim() + "…"
+            } else {
+                content.ifEmpty { typeName }
+            }
+
+            agendaEvents.add(
+                AgendaEvent(
+                    id = id,
+                    date = date,
+                    timeFrom = timeFrom,
+                    timeTo = timeTo,
+                    lessonNo = lessonNo,
+                    title = title,
+                    description = content,
+                    subjectId = subjId,
+                    subjectName = subjName,
+                    teacherName = teacherName,
+                    type = eventType,
+                    typeName = typeName,
+                    colorHex = colorHex
+                )
+            )
+
+            // If it's a homework assignment or homework category, also add to homework list
+            if (eventType == AgendaEventType.HOMEWORK || lowerCat.contains("domow") || lowerCat.contains("zadanie")) {
+                homeworks.add(
+                    Homework(
+                        id = id,
+                        date = date,
+                        addDate = addDate,
+                        subjectId = subjId,
+                        subjectName = subjName,
+                        teacherName = teacherName,
+                        content = content,
+                        categoryName = if (catName.isNotEmpty()) catName else "Zadanie domowe",
+                        isDone = false
+                    )
+                )
+            }
+        }
+
+        // Also fetch school free days into Agenda
+        try {
+            val freeDaysRoot = fetchJson(session, "Calendars/SchoolFreeDays")?.jsonObject
+            val freeDaysArray = freeDaysRoot?.get("SchoolFreeDays")?.jsonArray
+            freeDaysArray?.forEach { fdElem ->
+                val fdObj = fdElem as? JsonObject ?: return@forEach
+                val fdId = fdObj["Id"]?.jsonPrimitive?.contentOrNull ?: return@forEach
+                val dateFrom = fdObj["DateFrom"]?.jsonPrimitive?.contentOrNull ?: ""
+                val name = fdObj["Name"]?.jsonPrimitive?.contentOrNull ?: "Dzień wolny"
+                agendaEvents.add(
+                    AgendaEvent(
+                        id = "free_$fdId",
+                        date = dateFrom,
+                        title = name,
+                        description = "Dzień wolny od zajęć dydaktycznych",
+                        subjectName = "Szkoła",
+                        type = AgendaEventType.TRIP,
+                        typeName = "Dzień wolny",
+                        colorHex = "#4CAF50"
+                    )
+                )
+            }
+        } catch (_: Exception) {}
+
+        return homeworks to agendaEvents
+    }
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -44,6 +45,9 @@ enum class ScreenKey {
     HOME,
     GRADES,
     SCHEDULE,
+    MORE,
+    MESSAGES,
+    HOMEWORK,
     NOTICES,
     SETTINGS
 }
@@ -119,9 +123,14 @@ fun App(
     val attendances by repository.attendances.collectAsState()
     val attendanceStats by repository.attendanceStats.collectAsState()
     val notices by repository.notices.collectAsState()
+    val messages by repository.messages.collectAsState()
+    val homeworks by repository.homeworks.collectAsState()
+    val agendaEvents by repository.agendaEvents.collectAsState()
     val luckyNumber by repository.luckyNumber.collectAsState()
 
     val unreadNoticesCount = remember(notices) { notices.count { !it.isRead } }
+    val unreadMessagesCount = remember(messages) { messages.count { !it.isRead } }
+    val pendingHomeworkCount = remember(homeworks) { homeworks.count { !it.isDone } }
 
     fun triggerRefresh() {
         coroutineScope.launch {
@@ -147,8 +156,8 @@ fun App(
             showAccountSwitcherDialog = false
         } else if (isAddingAccount) {
             isAddingAccount = false
-        } else if (currentScreen == ScreenKey.NOTICES) {
-            currentScreen = ScreenKey.HOME
+        } else if (currentScreen in listOf(ScreenKey.MESSAGES, ScreenKey.HOMEWORK, ScreenKey.NOTICES, ScreenKey.SETTINGS)) {
+            currentScreen = ScreenKey.MORE
         } else if (currentScreen == ScreenKey.GRADES && gradesSubTab != 0) {
             gradesSubTab = 0
         } else if (currentScreen == ScreenKey.SCHEDULE && scheduleSubTab != 0) {
@@ -277,86 +286,6 @@ fun App(
             }
             is AuthState.Authenticated -> {
                 Scaffold(
-                    topBar = {
-                        Surface(
-                            color = MaterialTheme.colorScheme.surface,
-                            tonalElevation = 2.dp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .statusBarsPadding()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.clickable {
-                                        showAccountSwitcherDialog = true
-                                    }
-                                ) {
-                                    Text(
-                                        text = "LibreSynergia",
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 18.sp,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(
-                                        Icons.Default.ArrowDropDown,
-                                        contentDescription = strings.accountSwitcherTitle,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    // Notice Board Icon Button with Badge (Issue 7)
-                                    IconButton(
-                                        onClick = { currentScreen = ScreenKey.NOTICES }
-                                    ) {
-                                        BadgedBox(
-                                            badge = {
-                                                if (unreadNoticesCount > 0) {
-                                                    Badge {
-                                                        Text("$unreadNoticesCount")
-                                                    }
-                                                }
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = if (unreadNoticesCount > 0) Icons.Default.NotificationsActive else Icons.Default.Notifications,
-                                                contentDescription = strings.noticeBoardMenu,
-                                                tint = if (unreadNoticesCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-
-                                    // Manual Refresh Icon Button (Issue 13)
-                                    IconButton(
-                                        onClick = { triggerRefresh() },
-                                        enabled = !isManualRefreshing && !isDataLoading
-                                    ) {
-                                        if (isManualRefreshing || isDataLoading) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(18.dp),
-                                                strokeWidth = 2.dp
-                                            )
-                                        } else {
-                                            Icon(
-                                                Icons.Default.Refresh,
-                                                contentDescription = strings.manualRefresh,
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
                     bottomBar = {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
@@ -377,19 +306,46 @@ fun App(
                                     NavItem(ScreenKey.HOME, { it.navHome }, Icons.Default.Home),
                                     NavItem(ScreenKey.GRADES, { it.navGrades }, Icons.Default.FormatListNumbered),
                                     NavItem(ScreenKey.SCHEDULE, { it.navSchedule }, Icons.Default.CalendarToday),
-                                    NavItem(ScreenKey.SETTINGS, { it.navSettings }, Icons.Default.Settings)
+                                    NavItem(ScreenKey.MORE, { it.navMore }, Icons.Default.MoreHoriz)
                                 )
                                 items.forEach { item ->
-                                    val isSelected = currentScreen == item.key
+                                    val isSelected = if (item.key == ScreenKey.MORE) {
+                                        currentScreen in listOf(
+                                            ScreenKey.MORE,
+                                            ScreenKey.MESSAGES,
+                                            ScreenKey.HOMEWORK,
+                                            ScreenKey.NOTICES,
+                                            ScreenKey.SETTINGS
+                                        )
+                                    } else {
+                                        currentScreen == item.key
+                                    }
                                     NavigationBarItem(
                                         selected = isSelected,
                                         onClick = { currentScreen = item.key },
                                         icon = {
-                                            Icon(
-                                                imageVector = item.icon,
-                                                contentDescription = item.title(strings),
-                                                modifier = Modifier.size(22.dp)
-                                            )
+                                            if (item.key == ScreenKey.MORE && (unreadNoticesCount + unreadMessagesCount) > 0) {
+                                                BadgedBox(
+                                                    badge = {
+                                                        val totalBadge = unreadNoticesCount + unreadMessagesCount
+                                                        Badge {
+                                                            Text(if (totalBadge > 99) "99+" else "$totalBadge")
+                                                        }
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        imageVector = item.icon,
+                                                        contentDescription = item.title(strings),
+                                                        modifier = Modifier.size(22.dp)
+                                                    )
+                                                }
+                                            } else {
+                                                Icon(
+                                                    imageVector = item.icon,
+                                                    contentDescription = item.title(strings),
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                            }
                                         },
                                         label = {
                                             Text(
@@ -480,7 +436,7 @@ fun App(
                                         },
                                         onNavigateToAttendance = {
                                             currentScreen = ScreenKey.SCHEDULE
-                                            scheduleSubTab = 1
+                                            scheduleSubTab = 2
                                         },
                                         onNavigateToNotices = { currentScreen = ScreenKey.NOTICES },
                                         onGradeClick = { grade -> selectedGradeForDialog = grade },
@@ -489,7 +445,11 @@ fun App(
                                     )
                                 }
                                 ScreenKey.GRADES -> {
-                                    Column(modifier = Modifier.fillMaxSize()) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .statusBarsPadding()
+                                    ) {
                                         TabRow(
                                             selectedTabIndex = gradesSubTab,
                                             containerColor = MaterialTheme.colorScheme.surface,
@@ -538,7 +498,11 @@ fun App(
                                     }
                                 }
                                 ScreenKey.SCHEDULE -> {
-                                    Column(modifier = Modifier.fillMaxSize()) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .statusBarsPadding()
+                                    ) {
                                         TabRow(
                                             selectedTabIndex = scheduleSubTab,
                                             containerColor = MaterialTheme.colorScheme.surface,
@@ -559,6 +523,18 @@ fun App(
                                             Tab(
                                                 selected = scheduleSubTab == 1,
                                                 onClick = { scheduleSubTab = 1 },
+                                                text = { Text(strings.tabAgenda, fontWeight = FontWeight.SemiBold) },
+                                                icon = {
+                                                    Icon(
+                                                        Icons.AutoMirrored.Filled.EventNote,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            )
+                                            Tab(
+                                                selected = scheduleSubTab == 2,
+                                                onClick = { scheduleSubTab = 2 },
                                                 text = { Text(strings.tabAttendance, fontWeight = FontWeight.SemiBold) },
                                                 icon = {
                                                     Icon(
@@ -586,6 +562,12 @@ fun App(
                                                     isRefreshing = isManualRefreshing,
                                                     onRefresh = { triggerRefresh() }
                                                 )
+                                                1 -> AgendaScreen(
+                                                    events = agendaEvents,
+                                                    strings = strings,
+                                                    isRefreshing = isManualRefreshing,
+                                                    onRefresh = { triggerRefresh() }
+                                                )
                                                 else -> AttendanceScreen(
                                                     stats = attendanceStats,
                                                     attendances = attendances,
@@ -604,39 +586,52 @@ fun App(
                                         }
                                     }
                                 }
+                                ScreenKey.MORE -> {
+                                    MoreScreen(
+                                        profile = profile,
+                                        unreadMessagesCount = unreadMessagesCount,
+                                        pendingHomeworkCount = pendingHomeworkCount,
+                                        unreadNoticesCount = unreadNoticesCount,
+                                        strings = strings,
+                                        onNavigateToMessages = { currentScreen = ScreenKey.MESSAGES },
+                                        onNavigateToHomework = { currentScreen = ScreenKey.HOMEWORK },
+                                        onNavigateToNotices = { currentScreen = ScreenKey.NOTICES },
+                                        onNavigateToAgenda = {
+                                            currentScreen = ScreenKey.SCHEDULE
+                                            scheduleSubTab = 1
+                                        },
+                                        onNavigateToSettings = { currentScreen = ScreenKey.SETTINGS }
+                                    )
+                                }
+                                ScreenKey.MESSAGES -> {
+                                    MessagesScreen(
+                                        messages = messages,
+                                        strings = strings,
+                                        onMarkAsRead = { messageId -> repository.markMessageAsRead(messageId) },
+                                        onBack = { currentScreen = ScreenKey.MORE },
+                                        isRefreshing = isManualRefreshing,
+                                        onRefresh = { triggerRefresh() }
+                                    )
+                                }
+                                ScreenKey.HOMEWORK -> {
+                                    HomeworkScreen(
+                                        homeworks = homeworks,
+                                        strings = strings,
+                                        onToggleDone = { hwId -> repository.toggleHomeworkDone(hwId) },
+                                        onBack = { currentScreen = ScreenKey.MORE },
+                                        isRefreshing = isManualRefreshing,
+                                        onRefresh = { triggerRefresh() }
+                                    )
+                                }
                                 ScreenKey.NOTICES -> {
-                                    Column(modifier = Modifier.fillMaxSize()) {
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.surface,
-                                            tonalElevation = 2.dp,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 8.dp, vertical = 6.dp)
-                                            ) {
-                                                IconButton(onClick = { currentScreen = ScreenKey.HOME }) {
-                                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                                                }
-                                                Text(
-                                                    text = strings.noticesTitle,
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
+                                    NoticesScreen(
+                                        notices = notices,
+                                        strings = strings,
+                                        onBack = { currentScreen = ScreenKey.MORE },
+                                        onMarkAsRead = { noticeId ->
+                                            repository.markNoticeAsRead(noticeId)
                                         }
-                                        Box(modifier = Modifier.weight(1f)) {
-                                            NoticesScreen(
-                                                notices = notices,
-                                                strings = strings,
-                                                onMarkAsRead = { noticeId ->
-                                                    repository.markNoticeAsRead(noticeId)
-                                                }
-                                            )
-                                        }
-                                    }
+                                    )
                                 }
                                 ScreenKey.SETTINGS -> {
                                     SettingsScreen(
@@ -658,7 +653,7 @@ fun App(
                                             iconManager.setAppIcon(it)
                                         },
                                         onOpenAccountSwitcher = { showAccountSwitcherDialog = true },
-                                        onNavigateToNotices = { currentScreen = ScreenKey.NOTICES },
+                                        onBack = { currentScreen = ScreenKey.MORE },
                                         onLogout = {
                                             coroutineScope.launch {
                                                 cookieStorage.clear()

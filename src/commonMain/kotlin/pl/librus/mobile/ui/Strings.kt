@@ -26,10 +26,13 @@ class Strings(val lang: AppLanguage) {
     val navSimulator = if (isPl) "Kalkulator" else "Calculator"
     val navNotices = if (isPl) "Ogłoszenia" else "Notices"
     val navSettings = if (isPl) "Ustawienia" else "Settings"
+    val navMore = if (isPl) "Więcej" else "More"
     val tabTimetable = if (isPl) "Plan lekcji" else "Timetable"
     val tabAttendance = if (isPl) "Frekwencja" else "Attendance"
     val tabGrades = if (isPl) "Oceny" else "Grades"
     val tabSimulator = if (isPl) "Symulator" else "Simulator"
+    val tabAgenda = if (isPl) "Terminarz" else "Agenda"
+    val tabHomework = if (isPl) "Zadania domowe" else "Homework"
 
     // Sync Banner
     val syncInProgress = if (isPl) "Logowanie i aktualizacja danych..." else "Signing in and updating data..."
@@ -210,4 +213,53 @@ class Strings(val lang: AppLanguage) {
     val noticeBoardDesc = if (isPl) "Wszystkie komunikaty i ogłoszenia szkolne" else "School announcements & bulletins"
     val allNoticesRead = if (isPl) "Brak nowych ogłoszeń" else "No unread notices"
     val manualRefresh = if (isPl) "Odśwież" else "Refresh"
+
+    // More Hub Screen
+    val moreTitle = if (isPl) "Więcej" else "More"
+    val sectionSchoolCommunication = if (isPl) "Komunikacja i szkoła" else "School & Communication"
+    val sectionApp = if (isPl) "Aplikacja" else "Application"
+    val messagesDesc = if (isPl) "Wiadomości od nauczycieli i wychowawcy" else "Messages from teachers and school"
+    val homeworkDesc = if (isPl) "Zadania domowe, ćwiczenia i terminy oddania" else "Homework assignments, tasks & deadlines"
+    val agendaDesc = if (isPl) "Sprawdziany, kartkówki i ważne terminy" else "Exams, quizzes and scheduled events"
+    val settingsDesc = if (isPl) "Motyw, język, ikona aplikacji, konto" else "Theme, language, app icon, account"
+
+    // Messages Screen
+    val messagesTitle = if (isPl) "Wiadomości" else "Messages"
+    val messagesInbox = if (isPl) "Odebrane" else "Inbox"
+    val messagesAll = if (isPl) "Wszystkie" else "All"
+    val messagesUnread = if (isPl) "Nieprzeczytane" else "Unread"
+    val noMessages = if (isPl) "Brak wiadomości w skrzynce." else "No messages in inbox."
+    val messageSender = if (isPl) "Od: " else "From: "
+    val messageDate = if (isPl) "Wysłano: " else "Sent: "
+    val messageAttachments = if (isPl) "Załączniki" else "Attachments"
+    val messageDetails = if (isPl) "Szczegóły wiadomości" else "Message Details"
+
+    // Homework Screen
+    val homeworkTitle = if (isPl) "Zadania domowe" else "Homework"
+    val homeworkPending = if (isPl) "Do zrobienia" else "To do"
+    val homeworkCompleted = if (isPl) "Wykonane" else "Completed"
+    val homeworkAll = if (isPl) "Wszystkie" else "All"
+    val homeworkDue = if (isPl) "Termin: " else "Due: "
+    val homeworkDueToday = if (isPl) "Dzisiaj" else "Today"
+    val homeworkDueTomorrow = if (isPl) "Jutro" else "Tomorrow"
+    val homeworkOverdue = if (isPl) "Po terminie" else "Overdue"
+    val homeworkAssigned = if (isPl) "Zadano: " else "Assigned: "
+    val noHomework = if (isPl) "Brak zadań domowych." else "No homework assignments."
+
+    // Agenda Screen
+    val agendaTitle = if (isPl) "Terminarz" else "Agenda"
+    val agendaSubtitle = if (isPl) "Ciągła lista sprawdzianów, kartkówek i terminów" else "Continuous list of exams, quizzes and deadlines"
+    val agendaUpcoming = if (isPl) "Nadchodzące" else "Upcoming"
+    val agendaPast = if (isPl) "Przeszłe" else "Past"
+    val agendaAll = if (isPl) "Wszystkie" else "All"
+    val agendaExams = if (isPl) "Sprawdziany" else "Exams"
+    val noAgendaEvents = if (isPl) "Brak wydarzeń w terminarzu." else "No scheduled events in agenda."
+    val typeExam = if (isPl) "Sprawdzian" else "Exam"
+    val typeQuiz = if (isPl) "Kartkówka" else "Quiz"
+    val typeProject = if (isPl) "Projekt" else "Project"
+    val typeHomework = if (isPl) "Zadanie" else "Homework"
+    val typeMeeting = if (isPl) "Zebranie" else "Meeting"
+    val typeTrip = if (isPl) "Wycieczka" else "Trip"
+    val typeFreeDay = if (isPl) "Dzień wolny" else "Free day"
+    val typeOther = if (isPl) "Wydarzenie" else "Event"
 }
