@@ -223,4 +223,42 @@ class LibrusLiveApiClient(
             )
         }
     }
+
+    suspend fun fetchSchoolNotices(session: UserSession): List<SchoolNotice>? {
+        val root = fetchJson(session, "SchoolNotices")?.jsonObject ?: return null
+        val array = root["SchoolNotices"]?.jsonArray ?: return emptyList()
+
+        return array.mapNotNull { elem ->
+            val obj = elem.jsonObject
+            val id = obj["Id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+            val subject = obj["Subject"]?.jsonPrimitive?.contentOrNull ?: ""
+            val content = obj["Content"]?.jsonPrimitive?.contentOrNull ?: ""
+            val startDate = obj["StartDate"]?.jsonPrimitive?.contentOrNull ?: ""
+            val creationDate = obj["CreationDate"]?.jsonPrimitive?.contentOrNull ?: startDate
+            val wasRead = obj["WasRead"]?.jsonPrimitive?.booleanOrNull ?: false
+
+            SchoolNotice(
+                id = id,
+                subject = subject,
+                content = content,
+                author = "",
+                date = creationDate,
+                isRead = wasRead
+            )
+        }
+    }
+
+    suspend fun markNoticeAsRead(session: UserSession, noticeId: String) {
+        val base = baseUrl(session.backendType)
+        if (base.isEmpty()) return
+        try {
+            httpClient.get("$base/SchoolNotices/MarkAsRead/$noticeId") {
+                if (session.backendType == AuthBackendType.PORTAL_RODZINA) {
+                    header("Authorization", "Bearer ${session.activeChild.accessToken}")
+                }
+                header("Accept", "application/json")
+                header("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36")
+            }
+        } catch (_: Exception) {}
+    }
 }

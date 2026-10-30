@@ -94,4 +94,7 @@ data class SubjectGradeGroup(
     val semester1Average: Double? = null,
     val semester2Average: Double? = null,
     val yearAverage: Double? = null
-)
+) {
+    val allGrades: List<Grade>
+        get() = semester1Grades + semester2Grades + listOfNotNull(semester1Proposal, semester1Final, semester2Proposal, finalGrade)
+}

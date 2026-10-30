@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import pl.librus.mobile.data.MockDataProvider
 import pl.librus.mobile.data.storage.CachedAppState
 import pl.librus.mobile.data.storage.PersistentStorage
+import pl.librus.mobile.data.storage.SavedAccount
 import pl.librus.mobile.data.storage.SavedCredentials
 import pl.librus.mobile.domain.models.ChildAccount
 import pl.librus.mobile.domain.models.StudentProfile
@@ -46,8 +47,54 @@ class AuthManager(private val storage: PersistentStorage) {
     private val _backgroundSyncMessage = MutableStateFlow<String?>(null)
     val backgroundSyncMessage: StateFlow<String?> = _backgroundSyncMessage.asStateFlow()
 
+    private val _savedAccounts = MutableStateFlow<List<SavedAccount>>(emptyList())
+    val savedAccounts: StateFlow<List<SavedAccount>> = _savedAccounts.asStateFlow()
+
     init {
+        loadSavedAccounts()
         restoreSessionFromStorage()
+    }
+
+    private fun loadSavedAccounts() {
+        val jsonStr = storage.getString(KEY_SAVED_ACCOUNTS) ?: return
+        try {
+            val list = json.decodeFromString<List<SavedAccount>>(jsonStr)
+            _savedAccounts.value = list
+        } catch (_: Exception) {}
+    }
+
+    private fun saveAccount(account: SavedAccount) {
+        val current = _savedAccounts.value.toMutableList()
+        val index = current.indexOfFirst { it.id == account.id }
+        if (index >= 0) {
+            current[index] = account
+        } else {
+            current.add(account)
+        }
+        _savedAccounts.value = current
+        try {
+            storage.putString(KEY_SAVED_ACCOUNTS, json.encodeToString(current))
+        } catch (_: Exception) {}
+    }
+
+    fun removeAccount(accountId: String) {
+        val current = _savedAccounts.value.filter { it.id != accountId }
+        _savedAccounts.value = current
+        try {
+            storage.putString(KEY_SAVED_ACCOUNTS, json.encodeToString(current))
+        } catch (_: Exception) {}
+
+        // If the active session belonged to this account, switch or logout
+        val active = (_state.value as? AuthState.Authenticated)?.session
+        val activeId = active?.let { "${it.backendType.name}:${it.identifier.trim().lowercase()}" }
+        if (activeId == accountId) {
+            val next = current.firstOrNull()
+            if (next != null) {
+                switchSavedAccount(next.id) {}
+            } else {
+                logout()
+            }
+        }
     }
 
     private fun restoreSessionFromStorage() {
@@ -223,6 +270,54 @@ class AuthManager(private val storage: PersistentStorage) {
                 storage.putString(KEY_SAVED_CREDENTIALS, json.encodeToString(updatedCreds))
             } catch (_: Exception) {}
         }
+
+        // Update selectedChildId in saved accounts list
+        val accountId = "${current.session.backendType.name}:${current.session.identifier.trim().lowercase()}"
+        _savedAccounts.value.find { it.id == accountId }?.let { savedAcc ->
+            saveAccount(savedAcc.copy(selectedChildId = childId))
+        }
+    }
+
+    fun switchSavedAccount(accountId: String, onSwitched: (UserSession) -> Unit) {
+        val account = _savedAccounts.value.find { it.id == accountId } ?: return
+        val creds = SavedCredentials(
+            backendType = account.backendType,
+            identifier = account.identifier,
+            passwordObfuscated = account.passwordObfuscated,
+            selectedChildId = account.selectedChildId
+        )
+        storage.putString(KEY_SAVED_CREDENTIALS, json.encodeToString(creds))
+
+        val children = account.children.ifEmpty {
+            listOf(
+                ChildAccount(
+                    id = account.selectedChildId ?: account.identifier,
+                    accountIdentifier = account.identifier,
+                    studentName = account.studentName,
+                    login = account.identifier,
+                    accessToken = ""
+                )
+            )
+        }
+        val activeChild = children.find { it.id == account.selectedChildId } ?: children.first()
+        val profile = StudentProfile(
+            id = activeChild.id,
+            firstName = activeChild.studentName.split(" ").firstOrNull() ?: activeChild.studentName,
+            lastName = activeChild.studentName.split(" ").drop(1).joinToString(" "),
+            fullName = activeChild.studentName,
+            className = account.className,
+            accountEmail = account.identifier
+        )
+
+        val session = UserSession(
+            backendType = account.backendType,
+            identifier = account.identifier,
+            children = children,
+            activeChild = activeChild,
+            profile = profile
+        )
+        _state.value = AuthState.Authenticated(session)
+        onSwitched(session)
     }
 
     suspend fun loginPortal(email: String, pass: String, portalClient: PortalAuthClient) {
@@ -257,6 +352,17 @@ class AuthManager(private val storage: PersistentStorage) {
                 selectedChildId = active.id
             )
             storage.putString(KEY_SAVED_CREDENTIALS, json.encodeToString(creds))
+
+            val savedAcc = SavedAccount.create(
+                backendType = AuthBackendType.PORTAL_RODZINA,
+                identifier = email,
+                rawPassword = pass,
+                studentName = active.studentName,
+                className = "",
+                children = children,
+                selectedChildId = active.id
+            )
+            saveAccount(savedAcc)
         } catch (e: Exception) {
             _state.value = AuthState.Error(e.message ?: "Wystąpił nieoczekiwany błąd podczas logowania.")
         }
@@ -290,6 +396,17 @@ class AuthManager(private val storage: PersistentStorage) {
                 selectedChildId = active.id
             )
             storage.putString(KEY_SAVED_CREDENTIALS, json.encodeToString(creds))
+
+            val savedAcc = SavedAccount.create(
+                backendType = AuthBackendType.GATEWAY_API_20,
+                identifier = login,
+                rawPassword = pass,
+                studentName = active.studentName,
+                className = gatewaySession.className,
+                children = listOf(active),
+                selectedChildId = active.id
+            )
+            saveAccount(savedAcc)
         } catch (e: Exception) {
             _state.value = AuthState.Error(e.message ?: "Błąd logowania do systemu Synergia.")
         }
@@ -301,12 +418,21 @@ class AuthManager(private val storage: PersistentStorage) {
         _state.value = AuthState.Unauthenticated
     }
 
+    fun logoutAll() {
+        storage.remove(KEY_SAVED_CREDENTIALS)
+        storage.remove(KEY_CACHED_STATE)
+        storage.remove(KEY_SAVED_ACCOUNTS)
+        _savedAccounts.value = emptyList()
+        _state.value = AuthState.Unauthenticated
+    }
+
     fun clearError() {
         _state.value = AuthState.Unauthenticated
     }
 
     companion object {
         const val KEY_SAVED_CREDENTIALS = "saved_credentials"
+        const val KEY_SAVED_ACCOUNTS = "saved_accounts_list"
         const val KEY_CACHED_STATE = "cached_app_state"
     }
 }

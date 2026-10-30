@@ -73,7 +73,7 @@ class LibrusRepository(
         _luckyNumber.value = cached.luckyNumber
         _allGradesRaw.value = cached.rawGrades
 
-        val subjects = if (cached.subjects.isNotEmpty()) cached.subjects else MockDataProvider.subjects
+        val subjects = cached.subjects
         _grades.value = GradeCalculator.groupGradesBySubject(subjects, cached.rawGrades)
 
         timetableOwner = cached.timetableOwner
@@ -81,7 +81,26 @@ class LibrusRepository(
         attendanceOwner = cached.attendanceOwner
         _attendances.value = if (attendanceOwner != null) cached.attendances else emptyList()
         _attendanceStats.value = AttendanceCalculator.calculateStats(_attendances.value)
-        _notices.value = cached.notices
+
+        val readIds = getReadNoticeIds()
+        _notices.value = cached.notices.map {
+            if (it.id in readIds) it.copy(isRead = true) else it
+        }
+    }
+
+    private fun getReadNoticeIds(): Set<String> {
+        val str = storage.getString(KEY_READ_NOTICES) ?: return emptySet()
+        return try {
+            json.decodeFromString<Set<String>>(str)
+        } catch (_: Exception) {
+            emptySet()
+        }
+    }
+
+    private fun saveReadNoticeIds(ids: Set<String>) {
+        try {
+            storage.putString(KEY_READ_NOTICES, json.encodeToString(ids))
+        } catch (_: Exception) {}
     }
 
     suspend fun loadDataForSession(session: UserSession) {
@@ -114,44 +133,66 @@ class LibrusRepository(
             val week = liveApiClient?.fetchTimetable(session)
             _timetableSyncFailed.value = week == null
             week?.let { _timetable.value = it }
+
             val attendance = liveApiClient?.fetchAttendances(session)
             _attendanceSyncFailed.value = attendance == null
             attendance?.let {
                 _attendances.value = it
                 _attendanceStats.value = AttendanceCalculator.calculateStats(it)
             }
+
             val me = liveApiClient?.fetchMe(session)
             val profile = me ?: session.profile
             _studentProfile.value = profile
 
-            val lucky = liveApiClient?.fetchLuckyNumber(session) ?: MockDataProvider.luckyNumber
-            _luckyNumber.value = lucky
+            val lucky = liveApiClient?.fetchLuckyNumber(session)
+            if (lucky != null) {
+                _luckyNumber.value = lucky
+            }
 
             val liveSubjects = liveApiClient?.fetchSubjects(session) ?: emptyList()
-            val subjects = if (liveSubjects.isNotEmpty()) liveSubjects else MockDataProvider.subjects
+            // If live subjects fetched, use them; otherwise preserve current subjects
+            val subjects = if (liveSubjects.isNotEmpty()) {
+                liveSubjects
+            } else {
+                _grades.value.map { it.subject }.ifEmpty { emptyList() }
+            }
             val subjectsMap = subjects.associateBy { it.id }
 
             val liveCategories = liveApiClient?.fetchGradeCategories(session) ?: emptyList()
-            val categories = if (liveCategories.isNotEmpty()) liveCategories else MockDataProvider.categories
-            val categoriesMap = categories.associateBy { it.id }
+            val categoriesMap = liveCategories.associateBy { it.id }
 
-            val liveGrades = liveApiClient?.fetchGrades(session, subjectsMap, categoriesMap) ?: emptyList()
-            val rawGrades = if (liveGrades.isNotEmpty()) liveGrades else MockDataProvider.gradesJan
-            _allGradesRaw.value = rawGrades
+            val liveGrades = liveApiClient?.fetchGrades(session, subjectsMap, categoriesMap)
+            val rawGrades = if (liveGrades != null) {
+                _allGradesRaw.value = liveGrades
+                liveGrades
+            } else {
+                _allGradesRaw.value
+            }
 
             val groups = GradeCalculator.groupGradesBySubject(subjects, rawGrades)
             _grades.value = groups
 
-            _notices.value = MockDataProvider.notices
+            val readIds = getReadNoticeIds()
+            val liveNotices = liveApiClient?.fetchSchoolNotices(session)
+            if (liveNotices != null) {
+                _notices.value = liveNotices.map {
+                    if (it.id in readIds) it.copy(isRead = true) else it
+                }
+            } else {
+                _notices.value = _notices.value.map {
+                    if (it.id in readIds) it.copy(isRead = true) else it
+                }
+            }
 
-            // Save to persistent storage cache
+            // Save to persistent storage cache (never with mock data for live sessions)
             val cacheState = CachedAppState(
                 profile = profile,
                 children = session.children,
                 activeChild = session.activeChild,
-                luckyNumber = lucky,
+                luckyNumber = _luckyNumber.value,
                 subjects = subjects,
-                categories = categories,
+                categories = liveCategories,
                 rawGrades = rawGrades,
                 timetable = _timetable.value,
                 timetableOwner = timetableOwner,
@@ -209,8 +250,25 @@ class LibrusRepository(
     }
 
     fun markNoticeAsRead(noticeId: String) {
+        val readIds = getReadNoticeIds().toMutableSet()
+        readIds.add(noticeId)
+        saveReadNoticeIds(readIds)
+
         _notices.value = _notices.value.map {
             if (it.id == noticeId) it.copy(isRead = true) else it
         }
+
+        // Also update cached state so it persists immediately
+        storage.getString(AuthManager.KEY_CACHED_STATE)?.let { cachedJson ->
+            try {
+                val cached = json.decodeFromString<CachedAppState>(cachedJson)
+                val updated = cached.copy(notices = _notices.value)
+                storage.putString(AuthManager.KEY_CACHED_STATE, json.encodeToString(updated))
+            } catch (_: Exception) {}
+        }
+    }
+
+    companion object {
+        const val KEY_READ_NOTICES = "librus_read_notice_ids"
     }
 }
