@@ -1,5 +1,7 @@
 package pl.librus.mobile.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +20,7 @@ import pl.librus.mobile.domain.calculations.LessonStatus
 import pl.librus.mobile.domain.calculations.LessonStatusCalculator
 import pl.librus.mobile.domain.models.TimetableSlot
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.animation.LocalMotionSpec
 
 @Composable
 fun LessonStatusCard(
@@ -26,6 +29,8 @@ fun LessonStatusCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
+    val motionSpec = LocalMotionSpec.current
+
     var currentTime by remember {
         mutableStateOf(Clock.System.now().toLocalDateTime(TimeZone.of("Europe/Warsaw")).time)
     }
@@ -42,16 +47,28 @@ fun LessonStatusCard(
         LessonStatusCalculator.calculateStatus(todayLessons, currentTime)
     }
 
+    val targetBgColor = when (status) {
+        is LessonStatus.LessonOngoing -> MaterialTheme.colorScheme.primaryContainer
+        is LessonStatus.BreakOngoing -> if (status.isNextCancelled) Color(0xFFFFEBEE) else MaterialTheme.colorScheme.secondaryContainer
+        is LessonStatus.BeforeSchool -> MaterialTheme.colorScheme.tertiaryContainer
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    val animatedBgColor by animateColorAsState(
+        targetValue = targetBgColor,
+        animationSpec = motionSpec.tween(350),
+        label = "lessonCardBg"
+    )
+
+    val currentFraction = (status as? LessonStatus.LessonOngoing)?.progressFraction ?: 0f
+    val animatedProgress by animateFloatAsState(
+        targetValue = currentFraction,
+        animationSpec = motionSpec.tween(450),
+        label = "lessonProgress"
+    )
+
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = when (status) {
-                is LessonStatus.LessonOngoing -> MaterialTheme.colorScheme.primaryContainer
-                is LessonStatus.BreakOngoing -> if (status.isNextCancelled) Color(0xFFFFEBEE) else MaterialTheme.colorScheme.secondaryContainer
-                is LessonStatus.BeforeSchool -> MaterialTheme.colorScheme.tertiaryContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
-            }
-        ),
+        colors = CardDefaults.cardColors(containerColor = animatedBgColor),
         modifier = modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
@@ -113,7 +130,7 @@ fun LessonStatusCard(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
-                        progress = { status.progressFraction },
+                        progress = { animatedProgress },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(6.dp),

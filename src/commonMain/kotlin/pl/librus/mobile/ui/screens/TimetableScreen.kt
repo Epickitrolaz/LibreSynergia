@@ -1,5 +1,6 @@
 package pl.librus.mobile.ui.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,8 @@ import pl.librus.mobile.domain.models.TimetableDay
 import pl.librus.mobile.domain.models.TimetableSlot
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.animation.LocalMotionSpec
+import pl.librus.mobile.ui.animation.MotionSpec
 import pl.librus.mobile.ui.components.LessonStatusCard
 import pl.librus.mobile.ui.icons.LibrusIcons
 
@@ -61,6 +64,7 @@ fun TimetableScreen(
         )
     }
     var showOnlyChanges by remember { mutableStateOf(false) }
+    val motionSpec = LocalMotionSpec.current
 
     var currentTime by remember {
         mutableStateOf(Clock.System.now().toLocalDateTime(TimeZone.of("Europe/Warsaw")).time)
@@ -176,99 +180,126 @@ fun TimetableScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Szkolny.eu-style Lesson Status Card when viewing today (Issue 10)
-            if (isViewingToday) {
-                activeDay?.let { day ->
-                    LessonStatusCard(
-                        todayLessons = day.lessons,
-                        strings = strings
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-            }
-
-            if (isLoading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                Text(strings.timetableLoading, modifier = Modifier.padding(vertical = 8.dp))
-            } else if (syncFailed) {
-                Text(
-                    strings.timetableUnavailable,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
-                )
-                TextButton(onClick = onRetry) { Text(strings.retryTimetable) }
-            }
-
-            // Lessons list
-            if (lessons.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (showOnlyChanges && timetable.isNotEmpty()) {
-                            Icon(
-                                imageVector = LibrusIcons.ThumbUp,
-                                contentDescription = null,
-                                tint = Color(0xFF2E7D32),
-                                modifier = Modifier.size(36.dp)
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
-                        Text(
-                            text = when {
-                                timetable.isEmpty() && isLoading -> strings.timetableLoading
-                                timetable.isEmpty() -> strings.timetableNotLoaded
-                                showOnlyChanges -> strings.noChangesMessage
-                                else -> strings.noLessonsDay
-                            },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            AnimatedContent(
+                targetState = selectedDayIndex,
+                transitionSpec = {
+                    if (!motionSpec.isAnimationsEnabled) {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    } else if (targetState > initialState) {
+                        (slideInHorizontally(motionSpec.tween(280, easing = MotionSpec.EmphasizedDecelerate)) { it / 3 } + fadeIn(motionSpec.tween(200)))
+                            .togetherWith(slideOutHorizontally(motionSpec.tween(280, easing = MotionSpec.EmphasizedAccelerate)) { -it / 3 } + fadeOut(motionSpec.tween(180)))
+                    } else {
+                        (slideInHorizontally(motionSpec.tween(280, easing = MotionSpec.EmphasizedDecelerate)) { -it / 3 } + fadeIn(motionSpec.tween(200)))
+                            .togetherWith(slideOutHorizontally(motionSpec.tween(280, easing = MotionSpec.EmphasizedAccelerate)) { it / 3 } + fadeOut(motionSpec.tween(180)))
                     }
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "timetableDayAnim"
+            ) { targetDayIdx ->
+                val currentDay = calendarDays.getOrNull(targetDayIdx)
+                val dayViewingToday = currentDay?.date == today.toString()
+                val dayLessons = if (showOnlyChanges) {
+                    currentDay?.lessons?.filter { it.isSubstitution || it.isCancelled } ?: emptyList()
+                } else {
+                    currentDay?.lessons ?: emptyList()
                 }
-            } else {
-                val nowMinutes = currentTime.hour * 60 + currentTime.minute
-                val timeFormatted = "${currentTime.hour.toString().padStart(2, '0')}:${currentTime.minute.toString().padStart(2, '0')}"
 
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // If viewing today, check if current time is before the first lesson
-                    if (isViewingToday && lessons.isNotEmpty()) {
-                        val firstStart = LessonStatusCalculator.parseTimeToMinutes(lessons.first().hourFrom) ?: 0
-                        if (nowMinutes < firstStart) {
-                            item(key = "current_time_bar_top") {
-                                CurrentTimeIndicatorBar(timeStr = timeFormatted, strings = strings)
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Szkolny.eu-style Lesson Status Card when viewing today (Issue 10)
+                    if (dayViewingToday) {
+                        currentDay?.let { day ->
+                            LessonStatusCard(
+                                todayLessons = day.lessons,
+                                strings = strings
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
+
+                    if (isLoading) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Text(strings.timetableLoading, modifier = Modifier.padding(vertical = 8.dp))
+                    } else if (syncFailed) {
+                        Text(
+                            strings.timetableUnavailable,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                        )
+                        TextButton(onClick = onRetry) { Text(strings.retryTimetable) }
+                    }
+
+                    // Lessons list
+                    if (dayLessons.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                if (showOnlyChanges && timetable.isNotEmpty()) {
+                                    Icon(
+                                        imageVector = LibrusIcons.ThumbUp,
+                                        contentDescription = null,
+                                        tint = Color(0xFF2E7D32),
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                }
+                                Text(
+                                    text = when {
+                                        timetable.isEmpty() && isLoading -> strings.timetableLoading
+                                        timetable.isEmpty() -> strings.timetableNotLoaded
+                                        showOnlyChanges -> strings.noChangesMessage
+                                        else -> strings.noLessonsDay
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
-                    }
+                    } else {
+                        val nowMinutes = currentTime.hour * 60 + currentTime.minute
+                        val timeFormatted = "${currentTime.hour.toString().padStart(2, '0')}:${currentTime.minute.toString().padStart(2, '0')}"
 
-                    itemsIndexed(lessons, key = { _, slot -> slot.id }) { index, slot ->
-                        val slotStart = LessonStatusCalculator.parseTimeToMinutes(slot.hourFrom) ?: 0
-                        val slotEnd = LessonStatusCalculator.parseTimeToMinutes(slot.hourTo) ?: (slotStart + 45)
-
-                        val isCurrentLesson = isViewingToday && (nowMinutes in slotStart until slotEnd)
-
-                        LessonCard(slot = slot, strings = strings, isCurrent = isCurrentLesson)
-
-                        // If viewing today, check if current time is inside or right after this lesson (break)
-                        if (isViewingToday) {
-                            val nextSlot = lessons.getOrNull(index + 1)
-                            if (nextSlot != null) {
-                                val nextStart = LessonStatusCalculator.parseTimeToMinutes(nextSlot.hourFrom) ?: (slotEnd + 10)
-                                if (nowMinutes in slotEnd until nextStart) {
-                                    CurrentTimeIndicatorBar(timeStr = timeFormatted, strings = strings)
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            // If viewing today, check if current time is before the first lesson
+                            if (dayViewingToday && dayLessons.isNotEmpty()) {
+                                val firstStart = LessonStatusCalculator.parseTimeToMinutes(dayLessons.first().hourFrom) ?: 0
+                                if (nowMinutes < firstStart) {
+                                    item(key = "current_time_bar_top") {
+                                        CurrentTimeIndicatorBar(timeStr = timeFormatted, strings = strings)
+                                    }
                                 }
-                            } else {
-                                // After last lesson
-                                if (nowMinutes >= slotEnd) {
-                                    CurrentTimeIndicatorBar(timeStr = timeFormatted, strings = strings)
+                            }
+
+                            itemsIndexed(dayLessons, key = { _, slot -> slot.id }) { index, slot ->
+                                val slotStart = LessonStatusCalculator.parseTimeToMinutes(slot.hourFrom) ?: 0
+                                val slotEnd = LessonStatusCalculator.parseTimeToMinutes(slot.hourTo) ?: (slotStart + 45)
+
+                                val isCurrentLesson = dayViewingToday && (nowMinutes in slotStart until slotEnd)
+
+                                LessonCard(slot = slot, strings = strings, isCurrent = isCurrentLesson)
+
+                                // If viewing today, check if current time is inside or right after this lesson (break)
+                                if (dayViewingToday) {
+                                    val nextSlot = dayLessons.getOrNull(index + 1)
+                                    if (nextSlot != null) {
+                                        val nextStart = LessonStatusCalculator.parseTimeToMinutes(nextSlot.hourFrom) ?: (slotEnd + 10)
+                                        if (nowMinutes in slotEnd until nextStart) {
+                                            CurrentTimeIndicatorBar(timeStr = timeFormatted, strings = strings)
+                                        }
+                                    } else {
+                                        // After last lesson
+                                        if (nowMinutes >= slotEnd) {
+                                            CurrentTimeIndicatorBar(timeStr = timeFormatted, strings = strings)
+                                        }
+                                    }
                                 }
                             }
                         }

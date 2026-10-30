@@ -16,6 +16,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -28,6 +29,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import pl.librus.mobile.domain.models.Homework
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.animation.LocalMotionSpec
+import pl.librus.mobile.ui.animation.MotionSpec
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +54,7 @@ fun HomeworkScreen(
 
     val pendingCount = remember(homeworks) { homeworks.count { !it.isDone } }
     val completedCount = remember(homeworks) { homeworks.count { it.isDone } }
+    val motionSpec = LocalMotionSpec.current
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -127,40 +131,63 @@ fun HomeworkScreen(
             onRefresh = onRefresh,
             modifier = Modifier.fillMaxSize()
         ) {
-            if (filteredHomeworks.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.EditNote,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.size(56.dp)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = strings.noHomework,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            AnimatedContent(
+                targetState = selectedFilter,
+                transitionSpec = {
+                    if (!motionSpec.isAnimationsEnabled) {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    } else if (targetState > initialState) {
+                        (slideInHorizontally(motionSpec.tween(260)) { it / 4 } + fadeIn(motionSpec.tween(180)))
+                            .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { -it / 4 } + fadeOut(motionSpec.tween(150)))
+                    } else {
+                        (slideInHorizontally(motionSpec.tween(260)) { -it / 4 } + fadeIn(motionSpec.tween(180)))
+                            .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { it / 4 } + fadeOut(motionSpec.tween(150)))
                     }
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "homeworkFilterAnim"
+            ) { currentFilter ->
+                val listForFilter = when (currentFilter) {
+                    0 -> homeworks.filter { !it.isDone }
+                    1 -> homeworks.filter { it.isDone }
+                    else -> homeworks
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(filteredHomeworks, key = { it.id }) { homework ->
-                        HomeworkCard(
-                            homework = homework,
-                            strings = strings,
-                            onToggleDone = { onToggleDone(homework.id) }
-                        )
+
+                if (listForFilter.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.EditNote,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                modifier = Modifier.size(56.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = strings.noHomework,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(listForFilter, key = { it.id }) { homework ->
+                            HomeworkCard(
+                                homework = homework,
+                                strings = strings,
+                                onToggleDone = { onToggleDone(homework.id) }
+                            )
+                        }
                     }
                 }
             }
@@ -189,22 +216,35 @@ private fun HomeworkCard(
         }
     }
 
+    val motionSpec = LocalMotionSpec.current
+    val targetBg = if (homework.isDone) {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val animatedBg by animateColorAsState(
+        targetValue = targetBg,
+        animationSpec = motionSpec.tween(250),
+        label = "hwCardBg"
+    )
+    val animatedAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (homework.isDone) 0.65f else 1.0f,
+        animationSpec = motionSpec.tween(250),
+        label = "hwCardAlpha"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onToggleDone),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (homework.isDone) {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
-        ),
+        colors = CardDefaults.cardColors(containerColor = animatedBg),
         elevation = CardDefaults.cardElevation(defaultElevation = if (homework.isDone) 0.dp else 1.dp)
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier
+                .padding(14.dp)
+                .alpha(animatedAlpha),
             verticalAlignment = Alignment.Top
         ) {
             // Checkbox / Toggle Button

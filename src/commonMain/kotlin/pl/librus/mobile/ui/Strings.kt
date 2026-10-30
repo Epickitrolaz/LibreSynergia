@@ -164,6 +164,17 @@ class Strings(val lang: AppLanguage) {
     val themeLight = if (isPl) "Jasny" else "Light"
     val themeDark = if (isPl) "Ciemny" else "Dark"
     val themeAmoled = "AMOLED"
+
+    // Animation Settings
+    val animationSpeedSection = if (isPl) "Szybkość animacji" else "Animation Speed"
+    val animationSpeedDesc = if (isPl) "Dostosuj tempo płynnych przejść i animacji w aplikacji" else "Adjust the pace of smooth app transitions & animations"
+    val animationSpeedPreview = if (isPl) "Podgląd na żywo" else "Live Preview"
+    val animationSpeedTestButton = if (isPl) "Przetestuj przejście" else "Test Transition"
+
+    // Launch Screen
+    val launchTagline = if (isPl) "Wszystko w zasięgu ręki" else "Everything within reach"
+    val launchLoading = if (isPl) "Przygotowywanie danych szkolnych..." else "Preparing school data..."
+
     val appIconSection = if (isPl) "Ikona aplikacji" else "App Icon"
     val appIconDesc = if (isPl) "Wybierz wygląd ikony na ekranie głównym" else "Choose launcher icon on your home screen"
     val appIconDefault = if (isPl) "Domyślna (Monogram LS)" else "Default (LS Monogram)"
