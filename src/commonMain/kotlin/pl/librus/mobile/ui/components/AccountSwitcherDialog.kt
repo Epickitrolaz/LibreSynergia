@@ -37,14 +37,15 @@ fun AccountSwitcherDialog(
     onRemoveAccount: (String) -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-        ) {
+        AnimatedDialogContainer {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -272,4 +273,5 @@ fun AccountSwitcherDialog(
             }
         }
     }
+}
 }

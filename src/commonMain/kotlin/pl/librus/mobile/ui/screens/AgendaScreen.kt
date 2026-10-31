@@ -28,6 +28,8 @@ import kotlinx.datetime.todayIn
 import pl.librus.mobile.domain.models.AgendaEvent
 import pl.librus.mobile.domain.models.AgendaEventType
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.animation.LocalMotionSpec
+import pl.librus.mobile.ui.animation.MotionSpec
 import pl.librus.mobile.ui.components.parseColorHex
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +42,7 @@ fun AgendaScreen(
 ) {
     var selectedFilter by remember { mutableStateOf(0) } // 0: Upcoming, 1: Exams only, 2: All
     val today = remember { Clock.System.todayIn(TimeZone.of("Europe/Warsaw")) }
+    val motionSpec = LocalMotionSpec.current
 
     val filteredEvents = remember(events, selectedFilter, today) {
         val sorted = events.sortedWith(compareBy<AgendaEvent> { it.date }.thenBy { it.lessonNo ?: 99 })
@@ -87,41 +90,71 @@ fun AgendaScreen(
             onRefresh = onRefresh,
             modifier = Modifier.fillMaxSize()
         ) {
-            if (filteredEvents.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.EventNote,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.size(56.dp)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = strings.noAgendaEvents,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+            AnimatedContent(
+                targetState = selectedFilter,
+                transitionSpec = {
+                    if (!motionSpec.isAnimationsEnabled) {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    } else if (targetState > initialState) {
+                        (slideInHorizontally(motionSpec.tween(260)) { it / 4 } + fadeIn(motionSpec.tween(180)))
+                            .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { -it / 4 } + fadeOut(motionSpec.tween(150)))
+                    } else {
+                        (slideInHorizontally(motionSpec.tween(260)) { -it / 4 } + fadeIn(motionSpec.tween(180)))
+                            .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { it / 4 } + fadeOut(motionSpec.tween(150)))
                     }
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "agendaFilterAnim"
+            ) { currentFilter ->
+                val sorted = events.sortedWith(compareBy<AgendaEvent> { it.date }.thenBy { it.lessonNo ?: 99 })
+                val listForFilter = when (currentFilter) {
+                    0 -> sorted.filter {
+                        try {
+                            LocalDate.parse(it.date) >= today
+                        } catch (_: Exception) {
+                            true
+                        }
+                    }
+                    1 -> sorted.filter { it.type == AgendaEventType.EXAM }
+                    else -> sorted
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(filteredEvents, key = { it.id }) { event ->
-                        AgendaEventRow(
-                            event = event,
-                            today = today,
-                            strings = strings
-                        )
+
+                if (listForFilter.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.EventNote,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                modifier = Modifier.size(56.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = strings.noAgendaEvents,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(listForFilter, key = { it.id }) { event ->
+                            AgendaEventRow(
+                                event = event,
+                                today = today,
+                                strings = strings
+                            )
+                        }
                     }
                 }
             }
@@ -273,12 +306,23 @@ private fun AgendaEventRow(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val eventTypeLabel = when (event.type) {
+                        AgendaEventType.EXAM -> strings.typeExam
+                        AgendaEventType.QUIZ -> strings.typeQuiz
+                        AgendaEventType.HOMEWORK -> strings.typeHomework
+                        AgendaEventType.PROJECT -> strings.typeProject
+                        AgendaEventType.TRIP -> strings.typeTrip
+                        AgendaEventType.MEETING -> strings.typeMeeting
+                        AgendaEventType.INFORMATION -> strings.typeOther
+                        AgendaEventType.OTHER -> if (event.typeName.isNotBlank()) event.typeName else strings.typeOther
+                    }
+
                     Surface(
                         shape = RoundedCornerShape(6.dp),
                         color = badgeColor.copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = event.typeName.ifEmpty { "Wydarzenie" }.uppercase(),
+                            text = eventTypeLabel.uppercase(),
                             color = badgeColor,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.ExtraBold,
@@ -319,7 +363,7 @@ private fun AgendaEventRow(
                             modifier = Modifier.size(13.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        val lessonLabel = if (event.lessonNo != null) "Lekcja ${event.lessonNo}" else ""
+                        val lessonLabel = if (event.lessonNo != null) "${strings.statusLessonNo} ${event.lessonNo}" else ""
                         val timeLabel = if (event.timeFrom != null && event.timeTo != null) {
                             "${event.timeFrom} - ${event.timeTo}"
                         } else event.timeFrom.orEmpty()

@@ -1,10 +1,11 @@
-name: Build Mobile Apps (Android APK & iOS IPA)
+name: Build Mobile Apps (Android APK & iOS IPA) — LibreSynergia
 
 on:
   push:
     branches:
       - dev
       - main
+      - 'feature/**'
   pull_request:
     branches:
       - dev
@@ -41,14 +42,16 @@ jobs:
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: librus-mobile-android-apk
-          path: build/outputs/apk/debug/librus-mobile-debug.apk
+          name: libresynergia-android-apk
+          path: build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
 
   build-ios:
     name: Build iOS IPA
     runs-on: macos-15
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6144m -XX:+UseG1GC -XX:SoftRefLRUPolicyMSPerMB=1 -Dfile.encoding=UTF-8"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -64,7 +67,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Kotlin Multiplatform iOS Framework
-        run: ./gradlew linkReleaseFrameworkIosArm64
+        run: ./gradlew linkReleaseFrameworkIosArm64 --stacktrace
 
       - name: Build iOS Application
         run: |
@@ -77,21 +80,20 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CONFIGURATION_BUILD_DIR="${PWD}/build/ios/build-output" \
-            clean build
+            build
 
       - name: Package Sideloadable IPA
         run: |
           mkdir -p build/ios/Payload
           cp -R build/ios/build-output/iosApp.app build/ios/Payload/
           cd build/ios
-          zip -r -y librus-mobile-ios.ipa Payload
-          ls -lh librus-mobile-ios.ipa
+          zip -r -y libresynergia-ios.ipa Payload
+          ls -lh libresynergia-ios.ipa
 
       - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
         with:
-          name: librus-mobile-ios-ipa
-          path: build/ios/librus-mobile-ios.ipa
+          name: libresynergia-ios-ipa
+          path: build/ios/libresynergia-ios.ipa
           if-no-files-found: error
           retention-days: 14
-

@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import pl.librus.mobile.domain.models.LibrusMessage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.animation.LocalMotionSpec
+import pl.librus.mobile.ui.animation.MotionSpec
+import pl.librus.mobile.ui.components.AnimatedDialogContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +49,7 @@ fun MessagesScreen(
     }
 
     val unreadCount = remember(messages) { messages.count { !it.isRead } }
+    val motionSpec = LocalMotionSpec.current
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -117,44 +121,66 @@ fun MessagesScreen(
             onRefresh = onRefresh,
             modifier = Modifier.fillMaxSize()
         ) {
-            if (filteredMessages.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            modifier = Modifier.size(56.dp)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = strings.noMessages,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            AnimatedContent(
+                targetState = selectedFilter,
+                transitionSpec = {
+                    if (!motionSpec.isAnimationsEnabled) {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    } else if (targetState > initialState) {
+                        (slideInHorizontally(motionSpec.tween(260)) { it / 4 } + fadeIn(motionSpec.tween(180)))
+                            .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { -it / 4 } + fadeOut(motionSpec.tween(150)))
+                    } else {
+                        (slideInHorizontally(motionSpec.tween(260)) { -it / 4 } + fadeIn(motionSpec.tween(180)))
+                            .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { it / 4 } + fadeOut(motionSpec.tween(150)))
                     }
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "messagesFilterAnim"
+            ) { currentFilter ->
+                val listForFilter = when (currentFilter) {
+                    1 -> messages.filter { !it.isRead }
+                    else -> messages
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(filteredMessages, key = { it.id }) { message ->
-                        MessageCard(
-                            message = message,
-                            onClick = {
-                                selectedMessageForDetail = message
-                                if (!message.isRead) {
-                                    onMarkAsRead(message.id)
+
+                if (listForFilter.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                modifier = Modifier.size(56.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = strings.noMessages,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(listForFilter, key = { it.id }) { message ->
+                            MessageCard(
+                                message = message,
+                                onClick = {
+                                    selectedMessageForDetail = message
+                                    if (!message.isRead) {
+                                        onMarkAsRead(message.id)
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -319,14 +345,15 @@ private fun MessageDetailDialog(
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-        ) {
+        AnimatedDialogContainer {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -484,4 +511,5 @@ private fun MessageDetailDialog(
             }
         }
     }
+}
 }

@@ -1,6 +1,7 @@
 package pl.librus.mobile.ui
 
 import androidx.compose.runtime.staticCompositionLocalOf
+import kotlinx.datetime.DayOfWeek
 
 enum class AppLanguage(val code: String, val displayName: String) {
     ENGLISH("en", "English"),
@@ -13,8 +14,8 @@ class Strings(val lang: AppLanguage) {
     val isPl = lang == AppLanguage.POLISH
 
     // App Branding
-    val appName = "Librus Mobile"
-    val appSubtitle = if (isPl) "Nowoczesny, niezależny klient dla Librus Synergia" else "Modern, cross-platform client for Librus Synergia"
+    val appName = "LibreSynergia"
+    val appSubtitle = if (isPl) "Nowoczesny, niezależny klient dla Librus Synergia" else "Modern, independent client for Librus Synergia"
     val appDescription = if (isPl) "Wieloplatformowy klient Android & iOS stworzony w Kotlin Multiplatform i Compose Multiplatform." else "Cross-platform mobile client for Android & iOS built with Kotlin Multiplatform and Compose Multiplatform."
 
     // Navigation
@@ -164,13 +165,28 @@ class Strings(val lang: AppLanguage) {
     val themeLight = if (isPl) "Jasny" else "Light"
     val themeDark = if (isPl) "Ciemny" else "Dark"
     val themeAmoled = "AMOLED"
+
+    // Animation Settings
+    val animationSpeedSection = if (isPl) "Szybkość animacji" else "Animation Speed"
+    val animationSpeedDesc = if (isPl) "Dostosuj tempo płynnych przejść i animacji w aplikacji" else "Adjust the pace of smooth app transitions & animations"
+    val animationSpeedPreview = if (isPl) "Podgląd na żywo" else "Live Preview"
+    val animationSpeedTestButton = if (isPl) "Przetestuj przejście" else "Test Transition"
+
+    // Launch Screen
+    val launchTagline = if (isPl) "Wszystko w zasięgu ręki" else "Everything within reach"
+    val launchLoading = if (isPl) "Przygotowywanie danych szkolnych..." else "Preparing school data..."
+
     val appIconSection = if (isPl) "Ikona aplikacji" else "App Icon"
     val appIconDesc = if (isPl) "Wybierz wygląd ikony na ekranie głównym" else "Choose launcher icon on your home screen"
     val appIconDefault = if (isPl) "Domyślna (Monogram LS)" else "Default (LS Monogram)"
     val appIconVariant = if (isPl) "Izometryczna książka 3D" else "Isometric 3D Book"
     val aboutSection = if (isPl) "O aplikacji" else "About App"
-    val appVersion = "Librus Synergia Mobile v1.0.0"
+    val appVersion = "LibreSynergia v1.0.0"
     val logOut = if (isPl) "Wyloguj się" else "Sign Out"
+
+    // Search & Selection Dropdown
+    val searchPlaceholder = if (isPl) "Szukaj..." else "Search..."
+    val noSearchResults = if (isPl) "Brak wyników wyszukiwania." else "No search results found."
 
     // Back Exit Toast
     val backPressAgainToExit = if (isPl) "Naciśnij ponownie, aby wyjść z aplikacji" else "Press back again to exit"
@@ -183,6 +199,28 @@ class Strings(val lang: AppLanguage) {
     val dayPt = if (isPl) "Pt" else "Fr"
     val daySo = if (isPl) "So" else "Sa"
     val dayNd = if (isPl) "Nd" else "Su"
+
+    fun getDayName(day: DayOfWeek): String = when (day) {
+        DayOfWeek.MONDAY -> if (isPl) "Poniedziałek" else "Monday"
+        DayOfWeek.TUESDAY -> if (isPl) "Wtorek" else "Tuesday"
+        DayOfWeek.WEDNESDAY -> if (isPl) "Środa" else "Wednesday"
+        DayOfWeek.THURSDAY -> if (isPl) "Czwartek" else "Thursday"
+        DayOfWeek.FRIDAY -> if (isPl) "Piątek" else "Friday"
+        DayOfWeek.SATURDAY -> if (isPl) "Sobota" else "Saturday"
+        DayOfWeek.SUNDAY -> if (isPl) "Niedziela" else "Sunday"
+        else -> day.name
+    }
+
+    fun getTwoLetterDay(day: DayOfWeek): String = when (day) {
+        DayOfWeek.MONDAY -> dayPn
+        DayOfWeek.TUESDAY -> dayWt
+        DayOfWeek.WEDNESDAY -> daySr
+        DayOfWeek.THURSDAY -> dayCz
+        DayOfWeek.FRIDAY -> dayPt
+        DayOfWeek.SATURDAY -> daySo
+        DayOfWeek.SUNDAY -> dayNd
+        else -> day.name.take(2)
+    }
 
     // Lesson Status
     val statusLessonOngoing = if (isPl) "Lekcja trwa" else "Lesson in progress"
@@ -245,6 +283,7 @@ class Strings(val lang: AppLanguage) {
     val homeworkOverdue = if (isPl) "Po terminie" else "Overdue"
     val homeworkAssigned = if (isPl) "Zadano: " else "Assigned: "
     val noHomework = if (isPl) "Brak zadań domowych." else "No homework assignments."
+    val assignmentDefault = if (isPl) "Zadanie" else "Assignment"
 
     // Agenda Screen
     val agendaTitle = if (isPl) "Terminarz" else "Agenda"

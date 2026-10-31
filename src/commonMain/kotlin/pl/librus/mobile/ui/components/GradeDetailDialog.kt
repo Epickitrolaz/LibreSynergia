@@ -36,12 +36,13 @@ fun GradeDetailDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        AnimatedDialogContainer {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -132,6 +133,7 @@ fun GradeDetailDialog(
             }
         }
     }
+}
 }
 
 @Composable

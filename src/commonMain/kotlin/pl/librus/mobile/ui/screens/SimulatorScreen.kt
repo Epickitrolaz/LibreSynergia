@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -23,6 +24,7 @@ import pl.librus.mobile.domain.calculations.GradeCalculator
 import pl.librus.mobile.domain.models.SubjectGradeGroup
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.components.SearchableDropdown
 import pl.librus.mobile.ui.icons.LibrusIcons
 
 @Composable
@@ -100,44 +102,23 @@ fun SimulatorScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Subject Selector
-        Text(
-            text = strings.selectSubject,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
+        // Subject Selector with Custom Searchable Dropdown
+        SearchableDropdown(
+            label = strings.selectSubject,
+            selectedItem = currentGroup,
+            items = groups,
+            itemLabel = { it.subject.name },
+            itemSubtitle = { group ->
+                group.semester1Average?.let { "${strings.avgPrefix}$it" } ?: strings.noGrades
+            },
+            onItemSelected = { group ->
+                selectedSubjectIndex = groups.indexOf(group).coerceAtLeast(0)
+                simulatedGrades = emptyList()
+            },
+            strings = strings,
+            leadingIcon = Icons.Default.Book,
+            modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        var subjectDropdownExpanded by remember { mutableStateOf(false) }
-        Box {
-            OutlinedButton(
-                onClick = { subjectDropdownExpanded = true },
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = currentGroup?.subject?.name ?: strings.selectSubject,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-            }
-
-            DropdownMenu(
-                expanded = subjectDropdownExpanded,
-                onDismissRequest = { subjectDropdownExpanded = false }
-            ) {
-                groups.forEachIndexed { index, group ->
-                    DropdownMenuItem(
-                        text = { Text(group.subject.name) },
-                        onClick = {
-                            selectedSubjectIndex = index
-                            simulatedGrades = emptyList()
-                            subjectDropdownExpanded = false
-                        }
-                    )
-                }
-            }
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 

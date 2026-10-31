@@ -32,7 +32,10 @@ import pl.librus.mobile.platform.exitPlatformApp
 import pl.librus.mobile.platform.showPlatformToast
 import pl.librus.mobile.ui.AppLanguage
 import pl.librus.mobile.ui.Strings
+import pl.librus.mobile.ui.animation.LocalMotionSpec
+import pl.librus.mobile.ui.animation.MotionSpec
 import pl.librus.mobile.ui.components.AccountSwitcherDialog
+import pl.librus.mobile.ui.components.AppLaunchScreen
 import pl.librus.mobile.ui.components.GradeDetailDialog
 import pl.librus.mobile.ui.icons.AppIcon
 import pl.librus.mobile.ui.icons.AppIconManager
@@ -50,6 +53,13 @@ enum class ScreenKey {
     HOMEWORK,
     NOTICES,
     SETTINGS
+}
+
+private fun getTabOrder(key: ScreenKey): Int = when (key) {
+    ScreenKey.HOME -> 0
+    ScreenKey.GRADES -> 1
+    ScreenKey.SCHEDULE -> 2
+    else -> 3
 }
 
 data class NavItem(
@@ -97,6 +107,15 @@ fun App(
             } ?: AppThemeMode.SYSTEM
         )
     }
+
+    var animationSpeed by remember {
+        mutableStateOf(
+            storage.getString(MotionSpec.KEY_ANIMATION_SPEED)?.toFloatOrNull() ?: MotionSpec.DEFAULT_SPEED
+        )
+    }
+    val motionSpec = remember(animationSpeed) { MotionSpec(animationSpeed) }
+    var isLaunchComplete by remember { mutableStateOf(false) }
+
     var selectedGradeForDialog by remember { mutableStateOf<Grade?>(null) }
 
     val authState by authManager.state.collectAsState()
@@ -177,81 +196,105 @@ fun App(
     }
 
     LibrusTheme(themeMode = themeMode) {
-        if (isAddingAccount) {
-            // Add Account Screen Mode
-            Scaffold(
-                topBar = {
-                    Surface(
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 2.dp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .statusBarsPadding()
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
-                        ) {
-                            IconButton(onClick = { isAddingAccount = false }) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.close)
+        CompositionLocalProvider(LocalMotionSpec provides motionSpec) {
+            AnimatedContent(
+                targetState = isLaunchComplete,
+                transitionSpec = {
+                    if (!motionSpec.isAnimationsEnabled) {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    } else {
+                        (fadeIn(animationSpec = motionSpec.tween(350, easing = MotionSpec.EmphasizedDecelerate)) +
+                                scaleIn(animationSpec = motionSpec.tween(350, easing = MotionSpec.EmphasizedDecelerate), initialScale = 0.96f))
+                            .togetherWith(
+                                fadeOut(animationSpec = motionSpec.tween(300, easing = MotionSpec.EmphasizedAccelerate)) +
+                                        scaleOut(animationSpec = motionSpec.tween(300, easing = MotionSpec.EmphasizedAccelerate), targetScale = 1.06f)
+                            )
+                    }
+                },
+                label = "appLaunchTransition"
+            ) { launchDone ->
+                if (!launchDone) {
+                    AppLaunchScreen(
+                        isAppReady = authState !is AuthState.Authenticating,
+                        strings = strings,
+                        appIcon = currentAppIcon,
+                        onLaunchComplete = { isLaunchComplete = true }
+                    )
+                } else if (isAddingAccount) {
+                    // Add Account Screen Mode
+                    Scaffold(
+                        topBar = {
+                            Surface(
+                                color = MaterialTheme.colorScheme.surface,
+                                tonalElevation = 2.dp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .statusBarsPadding()
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                                ) {
+                                    IconButton(onClick = { isAddingAccount = false }) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.close)
+                                    }
+                                    Text(
+                                        text = strings.addAnotherAccount,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
-                            Text(
-                                text = strings.addAnotherAccount,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                        }
+                    ) { padding ->
+                        Box(modifier = Modifier.padding(padding)) {
+                            LoginScreen(
+                                authState = authState,
+                                strings = strings,
+                                currentAppIcon = currentAppIcon,
+                                onLoginPortal = { email, pass ->
+                                    coroutineScope.launch {
+                                        authManager.loginPortal(email, pass, portalAuthClient)
+                                        val current = authManager.state.value as? AuthState.Authenticated
+                                        if (current != null) {
+                                            isAddingAccount = false
+                                            repository.loadDataForSession(current.session)
+                                        }
+                                    }
+                                },
+                                onLoginGateway = { login, pass ->
+                                    coroutineScope.launch {
+                                        authManager.loginGateway(login, pass, gatewayAuthClient)
+                                        val current = authManager.state.value as? AuthState.Authenticated
+                                        if (current != null) {
+                                            isAddingAccount = false
+                                            repository.loadDataForSession(current.session)
+                                        }
+                                    }
+                                },
+                                onLoginDemo = {
+                                    authManager.loginDemo()
+                                    val current = authManager.state.value as? AuthState.Authenticated
+                                    if (current != null) {
+                                        isAddingAccount = false
+                                        coroutineScope.launch {
+                                            repository.loadDataForSession(current.session)
+                                        }
+                                    }
+                                },
+                                onClearError = { authManager.clearError() }
                             )
                         }
                     }
-                }
-            ) { padding ->
-                Box(modifier = Modifier.padding(padding)) {
-                    LoginScreen(
-                        authState = authState,
-                        strings = strings,
-                        onLoginPortal = { email, pass ->
-                            coroutineScope.launch {
-                                authManager.loginPortal(email, pass, portalAuthClient)
-                                val current = authManager.state.value as? AuthState.Authenticated
-                                if (current != null) {
-                                    isAddingAccount = false
-                                    repository.loadDataForSession(current.session)
-                                }
-                            }
-                        },
-                        onLoginGateway = { login, pass ->
-                            coroutineScope.launch {
-                                authManager.loginGateway(login, pass, gatewayAuthClient)
-                                val current = authManager.state.value as? AuthState.Authenticated
-                                if (current != null) {
-                                    isAddingAccount = false
-                                    repository.loadDataForSession(current.session)
-                                }
-                            }
-                        },
-                        onLoginDemo = {
-                            authManager.loginDemo()
-                            val current = authManager.state.value as? AuthState.Authenticated
-                            if (current != null) {
-                                isAddingAccount = false
-                                coroutineScope.launch {
-                                    repository.loadDataForSession(current.session)
-                                }
-                            }
-                        },
-                        onClearError = { authManager.clearError() }
-                    )
-                }
-            }
-            return@LibrusTheme
-        }
-
-        when (val state = authState) {
+                } else {
+                    when (val state = authState) {
             is AuthState.Unauthenticated, is AuthState.Authenticating, is AuthState.Error -> {
                 LoginScreen(
                     authState = state,
                     strings = strings,
+                    currentAppIcon = currentAppIcon,
                     onLoginPortal = { email, pass ->
                         coroutineScope.launch {
                             authManager.loginPortal(email, pass, portalAuthClient)
@@ -396,7 +439,7 @@ fun App(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = backgroundSyncMessage ?: strings.syncInProgress,
+                                        text = strings.syncInProgress,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -405,12 +448,48 @@ fun App(
                             }
                         }
 
-                        Box(
+                        AnimatedContent(
+                            targetState = currentScreen,
+                            transitionSpec = {
+                                if (!motionSpec.isAnimationsEnabled) {
+                                    EnterTransition.None togetherWith ExitTransition.None
+                                } else {
+                                    val fromSub = initialState in listOf(ScreenKey.MESSAGES, ScreenKey.HOMEWORK, ScreenKey.NOTICES, ScreenKey.SETTINGS)
+                                    val toSub = targetState in listOf(ScreenKey.MESSAGES, ScreenKey.HOMEWORK, ScreenKey.NOTICES, ScreenKey.SETTINGS)
+
+                                    when {
+                                        !fromSub && toSub -> {
+                                            (slideInHorizontally(motionSpec.tween(320, easing = MotionSpec.EmphasizedDecelerate)) { it } + fadeIn(motionSpec.tween(220)))
+                                                .togetherWith(slideOutHorizontally(motionSpec.tween(320, easing = MotionSpec.EmphasizedAccelerate)) { -it / 3 } + fadeOut(motionSpec.tween(180)))
+                                        }
+                                        fromSub && !toSub -> {
+                                            (slideInHorizontally(motionSpec.tween(320, easing = MotionSpec.EmphasizedDecelerate)) { -it / 3 } + fadeIn(motionSpec.tween(220)))
+                                                .togetherWith(slideOutHorizontally(motionSpec.tween(320, easing = MotionSpec.EmphasizedAccelerate)) { it } + fadeOut(motionSpec.tween(180)))
+                                        }
+                                        fromSub && toSub -> {
+                                            (fadeIn(motionSpec.tween(220)) + scaleIn(motionSpec.tween(220), initialScale = 0.96f))
+                                                .togetherWith(fadeOut(motionSpec.tween(180)) + scaleOut(motionSpec.tween(180), targetScale = 1.04f))
+                                        }
+                                        else -> {
+                                            val initialTab = getTabOrder(initialState)
+                                            val targetTab = getTabOrder(targetState)
+                                            if (targetTab > initialTab) {
+                                                (slideInHorizontally(motionSpec.tween(300, easing = MotionSpec.EmphasizedDecelerate)) { it / 3 } + fadeIn(motionSpec.tween(220)))
+                                                    .togetherWith(slideOutHorizontally(motionSpec.tween(300, easing = MotionSpec.EmphasizedAccelerate)) { -it / 3 } + fadeOut(motionSpec.tween(180)))
+                                            } else {
+                                                (slideInHorizontally(motionSpec.tween(300, easing = MotionSpec.EmphasizedDecelerate)) { -it / 3 } + fadeIn(motionSpec.tween(220)))
+                                                    .togetherWith(slideOutHorizontally(motionSpec.tween(300, easing = MotionSpec.EmphasizedAccelerate)) { it / 3 } + fadeOut(motionSpec.tween(180)))
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f)
-                        ) {
-                            when (currentScreen) {
+                                .weight(1f),
+                            label = "mainScreenTransition"
+                        ) { screen ->
+                            when (screen) {
                                 ScreenKey.HOME -> {
                                     HomeScreen(
                                         profile = profile,
@@ -480,8 +559,23 @@ fun App(
                                                 }
                                             )
                                         }
-                                        Box(modifier = Modifier.weight(1f)) {
-                                            when (gradesSubTab) {
+                                        AnimatedContent(
+                                            targetState = gradesSubTab,
+                                            transitionSpec = {
+                                                if (!motionSpec.isAnimationsEnabled) {
+                                                    EnterTransition.None togetherWith ExitTransition.None
+                                                } else if (targetState > initialState) {
+                                                    (slideInHorizontally(motionSpec.tween(260)) { it / 3 } + fadeIn(motionSpec.tween(180)))
+                                                        .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { -it / 3 } + fadeOut(motionSpec.tween(150)))
+                                                } else {
+                                                    (slideInHorizontally(motionSpec.tween(260)) { -it / 3 } + fadeIn(motionSpec.tween(180)))
+                                                        .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { it / 3 } + fadeOut(motionSpec.tween(150)))
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            label = "gradesSubTabAnim"
+                                        ) { subTab ->
+                                            when (subTab) {
                                                 0 -> GradesScreen(
                                                     groups = grades,
                                                     strings = strings,
@@ -543,8 +637,23 @@ fun App(
                                                 }
                                             )
                                         }
-                                        Box(modifier = Modifier.weight(1f)) {
-                                            when (scheduleSubTab) {
+                                        AnimatedContent(
+                                            targetState = scheduleSubTab,
+                                            transitionSpec = {
+                                                if (!motionSpec.isAnimationsEnabled) {
+                                                    EnterTransition.None togetherWith ExitTransition.None
+                                                } else if (targetState > initialState) {
+                                                    (slideInHorizontally(motionSpec.tween(260)) { it / 3 } + fadeIn(motionSpec.tween(180)))
+                                                        .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { -it / 3 } + fadeOut(motionSpec.tween(150)))
+                                                } else {
+                                                    (slideInHorizontally(motionSpec.tween(260)) { -it / 3 } + fadeIn(motionSpec.tween(180)))
+                                                        .togetherWith(slideOutHorizontally(motionSpec.tween(260)) { it / 3 } + fadeOut(motionSpec.tween(150)))
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            label = "scheduleSubTabAnim"
+                                        ) { subTab ->
+                                            when (subTab) {
                                                 0 -> TimetableScreen(
                                                     timetable = timetable,
                                                     strings = strings,
@@ -590,6 +699,7 @@ fun App(
                                         unreadMessagesCount = unreadMessagesCount,
                                         pendingHomeworkCount = pendingHomeworkCount,
                                         unreadNoticesCount = unreadNoticesCount,
+                                        currentAppIcon = currentAppIcon,
                                         strings = strings,
                                         onNavigateToMessages = { currentScreen = ScreenKey.MESSAGES },
                                         onNavigateToHomework = { currentScreen = ScreenKey.HOMEWORK },
@@ -637,6 +747,7 @@ fun App(
                                         themeMode = themeMode,
                                         language = language,
                                         currentAppIcon = currentAppIcon,
+                                        animationSpeed = animationSpeed,
                                         strings = strings,
                                         onThemeChange = {
                                             themeMode = it
@@ -649,6 +760,10 @@ fun App(
                                         onAppIconChange = {
                                             currentAppIcon = it
                                             iconManager.setAppIcon(it)
+                                        },
+                                        onAnimationSpeedChange = {
+                                            animationSpeed = it
+                                            storage.putString(MotionSpec.KEY_ANIMATION_SPEED, it.toString())
                                         },
                                         onOpenAccountSwitcher = { showAccountSwitcherDialog = true },
                                         onBack = { currentScreen = ScreenKey.MORE },
@@ -708,4 +823,7 @@ fun App(
             }
         }
     }
+}
+}
+}
 }

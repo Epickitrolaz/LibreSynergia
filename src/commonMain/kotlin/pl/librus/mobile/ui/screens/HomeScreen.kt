@@ -220,13 +220,17 @@ fun HomeScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    val localizedDayName = todaySchedule?.date?.let { dateStr ->
+                        runCatching { LocalDate.parse(dateStr).dayOfWeek }.getOrNull()
+                    }?.let { strings.getDayName(it) } ?: todaySchedule?.dayOfWeekName ?: ""
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${strings.timetableToday}${todaySchedule?.dayOfWeekName ?: ""}",
+                            text = "${strings.timetableToday}$localizedDayName",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium
                         )
